@@ -1,0 +1,84 @@
+[project]
+name = "anomaly-detection"
+version = "0.1.0"
+description = "FjordWatch trajectory anomaly detection: Isolation Forest + LSTM autoencoder ensemble served by FastAPI."
+requires-python = ">=3.12,<3.14"
+license = { text = "MIT" }
+authors = [{ name = "FjordWatch contributors" }]
+
+dependencies = [
+    "fastapi>=0.115,<0.116",
+    "uvicorn[standard]>=0.32,<0.33",
+    "pydantic-settings>=2.6,<3",
+    "numpy>=2.1,<3",
+    "pandas>=2.2,<3",
+    "scikit-learn>=1.5,<2",
+    "torch>=2.5,<3",
+    "onnx>=1.17,<2",
+    "onnxruntime>=1.20,<2",
+    "psycopg[binary]>=3.2,<4",
+    "redis>=5.2,<6",
+    "mlflow-skinny>=2.18,<3",
+    "prometheus-fastapi-instrumentator>=7,<8",
+    "apscheduler>=3.11,<4",
+    "structlog>=24.4,<25",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3,<9",
+    "pytest-asyncio>=0.24,<1",
+    "httpx>=0.27,<0.28",
+    "ruff>=0.7,<1",
+    "mypy>=1.13,<2",
+    "types-requests",
+]
+
+[project.scripts]
+anomaly-train = "anomaly_detection.scripts.train:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",     # pycodestyle / pyflakes
+    "I",               # import sort
+    "B",               # flake8-bugbear
+    "UP",              # pyupgrade
+    "SIM",             # flake8-simplify
+    "RUF",             # ruff-specific
+    "TID",             # tidy-imports
+    "C4",              # comprehensions
+    "PT",              # pytest
+]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+warn_unreachable = true
+plugins = []
+
+[[tool.mypy.overrides]]
+module = ["mlflow.*", "apscheduler.*", "onnxruntime.*", "onnx.*", "prometheus_fastapi_instrumentator.*", "torch.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "-q"
+asyncio_mode = "auto"
+testpaths = ["tests"]
