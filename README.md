@@ -18,6 +18,8 @@ the data. Six services, one `make up` away.
 
 ![FjordWatch — live vessels around Bergen with the agent answering a tool-cited question](docs/images/agent-demo.png)
 
+![Vessel side panel — MMSI, IMO, call sign, destination, ETA, position, speed for a clicked vessel](docs/images/vessel-details.png)
+
 ## What it does
 
 - **Live map.** Every Norwegian-coast vessel that broadcasts AIS appears on a Leaflet map within seconds of the message hitting the wire. Click a vessel to see its 24-hour track and metadata.
