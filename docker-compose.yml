@@ -111,6 +111,21 @@ services:
         condition: service_healthy
 
   # ---- Backend services --------------------------------------------------
+  embedding:
+    build:
+      context: ./services/embedding
+      dockerfile: Dockerfile
+    image: fjordwatch/embedding:dev
+    restart: unless-stopped
+    environment:
+      EMBEDDING_STUB: ${EMBEDDING_STUB:-1}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-intfloat/multilingual-e5-large}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-1024}
+      EMBEDDING_PORT: "8004"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${EMBEDDING_PORT:-8004}:8004"
+
   ais-ingestion:
     build:
       context: ./services/ais-ingestion
@@ -156,6 +171,14 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5000}
       DOTNET_RUNNING_IN_CONTAINER: "true"
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434/}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b-instruct-q4_K_M}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_OPENAI_DEPLOYMENT: ${AZURE_OPENAI_DEPLOYMENT:-}
+      EMBEDDING_URL: ${EMBEDDING_URL:-http://embedding:8004/}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-1024}
     ports:
       - "${CORE_API_PORT:-8080}:8080"
     depends_on:
@@ -165,6 +188,8 @@ services:
         condition: service_healthy
       db-migrate:
         condition: service_completed_successfully
+      embedding:
+        condition: service_started
 
   ship-detection:
     build:

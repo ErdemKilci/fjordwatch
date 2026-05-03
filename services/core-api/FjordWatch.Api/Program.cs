@@ -1,5 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FjordWatch.Agent;
+using FjordWatch.Agent.Providers;
+using FjordWatch.Agent.Rag;
+using FjordWatch.Agent.Tools;
 using FjordWatch.Api.Endpoints;
 using FjordWatch.Api.Realtime;
 using FjordWatch.Domain;
@@ -61,6 +65,58 @@ builder.Services.AddOpenTelemetry()
         .AddMeter("FjordWatch.Api.RedisRelay")
         .AddPrometheusExporter());
 
+// ---- Agent ----------------------------------------------------------------
+var llmProvider = builder.Configuration["LLM_PROVIDER"]?.ToLowerInvariant() ?? "ollama";
+
+builder.Services.AddHttpClient("agent-chat-ollama", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["OLLAMA_HOST"] ?? "http://ollama:11434/");
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+builder.Services.AddHttpClient("agent-chat-azure", client =>
+{
+    var endpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"];
+    if (!string.IsNullOrEmpty(endpoint))
+    {
+        client.BaseAddress = new Uri(endpoint);
+    }
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+
+builder.Services.AddSingleton<IChatProvider>(sp =>
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    if (llmProvider == "azure_openai")
+    {
+        var deployment = builder.Configuration["AZURE_OPENAI_DEPLOYMENT"]
+            ?? throw new InvalidOperationException("AZURE_OPENAI_DEPLOYMENT is required when LLM_PROVIDER=azure_openai");
+        var apiKey = builder.Configuration["AZURE_OPENAI_API_KEY"]
+            ?? throw new InvalidOperationException("AZURE_OPENAI_API_KEY is required when LLM_PROVIDER=azure_openai");
+        return new AzureOpenAIChatProvider(factory.CreateClient("agent-chat-azure"), deployment, apiKey);
+    }
+    var model = builder.Configuration["OLLAMA_MODEL"] ?? "llama3.1:8b-instruct-q4_K_M";
+    return new OllamaChatProvider(factory.CreateClient("agent-chat-ollama"), model);
+});
+
+builder.Services.AddHttpClient("embedding", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["EMBEDDING_URL"] ?? "http://embedding:8004/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddSingleton<IEmbeddingProvider>(sp =>
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    var dim = int.Parse(builder.Configuration["EMBEDDING_DIMENSION"] ?? "1024", System.Globalization.CultureInfo.InvariantCulture);
+    return new HttpEmbeddingProvider(factory.CreateClient("embedding"), dim);
+});
+builder.Services.AddScoped<IRegulationRetriever, PgvectorRegulationRetriever>();
+builder.Services.AddScoped<IAgentTool, NearestVesselsTool>();
+builder.Services.AddScoped<IAgentTool, VesselHistoryTool>();
+builder.Services.AddScoped<IAgentTool, RecentAnomaliesTool>();
+builder.Services.AddScoped<IAgentTool, DarkVesselsTool>();
+builder.Services.AddScoped<IAgentTool, SearchRegulationsTool>();
+builder.Services.AddScoped<IAgent, AgentOrchestrator>();
+
 var app = builder.Build();
 
 app.UseCors();
@@ -88,6 +144,7 @@ app.MapPrometheusScrapingEndpoint("/metrics");
 app.MapVesselEndpoints();
 app.MapAnomalyEndpoints();
 app.MapSarEndpoints();
+app.MapAgentEndpoints();
 
 app.MapHub<VesselsHub>("/hubs/vessels");
 

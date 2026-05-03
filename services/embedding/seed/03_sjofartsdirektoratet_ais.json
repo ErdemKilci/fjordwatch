@@ -1,0 +1,6 @@
+{
+  "source": "https://www.sdir.no/en/shipping/safety/communications-equipment/ais/",
+  "title": "Sjøfartsdirektoratet — AIS carriage requirements",
+  "language": "en",
+  "text": "Norwegian regulations implement IMO SOLAS Chapter V Regulation 19 on the carriage of automatic identification systems. All ships of 300 gross tonnage and upwards engaged on international voyages, cargo ships of 500 gross tonnage and upwards not engaged on international voyages, and all passenger ships irrespective of size must be fitted with a Class A AIS transponder broadcasting continuously while at sea. Norwegian fishing vessels of 15 metres length overall and above must carry an AIS transponder; smaller fishing vessels are exempt unless they operate in regulated areas. Pleasure craft are not required to carry AIS but may do so voluntarily; many use Class B transponders. Operators are responsible for ensuring AIS transmits correct static data including MMSI, vessel name, call sign, ship type code, dimensions, and IMO number where applicable. Failure to maintain AIS in working order while subject to a carriage requirement is an offence under the Norwegian Ship Safety and Security Act (skipssikkerhetsloven)."
+}
