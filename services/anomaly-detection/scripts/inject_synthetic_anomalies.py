@@ -36,17 +36,19 @@ def _normal(rng: np.random.Generator, mmsi: int, base_now: pd.Timestamp) -> Traj
     lons = base_lon + np.cumsum(rng.normal(0, 0.001, STEPS))
     lats = base_lat + np.cumsum(rng.normal(0, 0.001, STEPS))
     sog = np.clip(rng.normal(8.0, 1.0, STEPS), 0.0, 20.0)
-    df = pd.DataFrame({
-        "mmsi": np.full(STEPS, mmsi, dtype=np.int64),
-        "ts": ts,
-        "longitude": lons,
-        "latitude": lats,
-        "sog_knots": sog,
-        "cog_deg": np.full(STEPS, heading),
-        "heading_deg": np.full(STEPS, heading),
-        "nav_status": np.zeros(STEPS, dtype=np.int16),
-        "msg_type": np.full(STEPS, 1, dtype=np.int16),
-    })
+    df = pd.DataFrame(
+        {
+            "mmsi": np.full(STEPS, mmsi, dtype=np.int64),
+            "ts": ts,
+            "longitude": lons,
+            "latitude": lats,
+            "sog_knots": sog,
+            "cog_deg": np.full(STEPS, heading),
+            "heading_deg": np.full(STEPS, heading),
+            "nav_status": np.zeros(STEPS, dtype=np.int16),
+            "msg_type": np.full(STEPS, 1, dtype=np.int16),
+        }
+    )
     return Trajectory("normal", df)
 
 

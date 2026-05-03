@@ -44,5 +44,6 @@ def test_invalid_weights_rejected() -> None:
     train_df = pd.DataFrame(rng.normal(size=(64, len(FEATURE_NAMES))), columns=list(FEATURE_NAMES))
     iso = IsoForestScorer(random_state=0).fit(train_df)
     import pytest
+
     with pytest.raises(ValueError, match="weights must sum to 1"):
         EnsembleScorer(iso=iso, lstm=None, iso_weight=0.7, lstm_weight=0.4)

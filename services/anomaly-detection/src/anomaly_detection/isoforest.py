@@ -37,7 +37,7 @@ class IsoForestScorer:
         )
         self._fitted = False
 
-    def fit(self, df: pd.DataFrame) -> "IsoForestScorer":
+    def fit(self, df: pd.DataFrame) -> IsoForestScorer:
         x = self._extract(df)
         self._model.fit(x)
         self._fitted = True
@@ -76,9 +76,9 @@ class IsoForestScorer:
             pickle.dump({"model": self._model, "fitted": self._fitted}, f)
 
     @classmethod
-    def load(cls, path: Path) -> "IsoForestScorer":
+    def load(cls, path: Path) -> IsoForestScorer:
         with path.open("rb") as f:
-            blob: dict[str, Any] = pickle.load(f)  # noqa: S301 (trusted artifact)
+            blob: dict[str, Any] = pickle.load(f)
         scorer = cls()
         scorer._model = blob["model"]
         scorer._fitted = bool(blob["fitted"])

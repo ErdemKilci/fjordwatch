@@ -29,21 +29,35 @@ def test_features_to_frame_columns(steady_track: pd.DataFrame) -> None:
 
 
 def test_returns_none_for_short_track() -> None:
-    df = pd.DataFrame({
-        "mmsi": [1],
-        "ts": [pd.Timestamp("2024-01-01T00:00:00Z")],
-        "longitude": [10.0], "latitude": [60.0], "sog_knots": [5.0],
-        "cog_deg": [0.0], "heading_deg": [0.0], "nav_status": [0], "msg_type": [1],
-    })
+    df = pd.DataFrame(
+        {
+            "mmsi": [1],
+            "ts": [pd.Timestamp("2024-01-01T00:00:00Z")],
+            "longitude": [10.0],
+            "latitude": [60.0],
+            "sog_knots": [5.0],
+            "cog_deg": [0.0],
+            "heading_deg": [0.0],
+            "nav_status": [0],
+            "msg_type": [1],
+        }
+    )
     assert compute_features(df, now_utc=pd.Timestamp("2024-01-01T01:00:00Z")) is None
 
 
 def test_rejects_multiple_mmsis() -> None:
-    df = pd.DataFrame({
-        "mmsi": [1, 2],
-        "ts": [pd.Timestamp("2024-01-01T00:00:00Z"), pd.Timestamp("2024-01-01T00:01:00Z")],
-        "longitude": [10.0, 10.1], "latitude": [60.0, 60.1], "sog_knots": [5.0, 5.0],
-        "cog_deg": [0.0, 0.0], "heading_deg": [0.0, 0.0], "nav_status": [0, 0], "msg_type": [1, 1],
-    })
+    df = pd.DataFrame(
+        {
+            "mmsi": [1, 2],
+            "ts": [pd.Timestamp("2024-01-01T00:00:00Z"), pd.Timestamp("2024-01-01T00:01:00Z")],
+            "longitude": [10.0, 10.1],
+            "latitude": [60.0, 60.1],
+            "sog_knots": [5.0, 5.0],
+            "cog_deg": [0.0, 0.0],
+            "heading_deg": [0.0, 0.0],
+            "nav_status": [0, 0],
+            "msg_type": [1, 1],
+        }
+    )
     with pytest.raises(ValueError, match="exactly one MMSI"):
         compute_features(df, now_utc=pd.Timestamp("2024-01-01T01:00:00Z"))

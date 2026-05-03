@@ -6,11 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 
 from .features import FEATURE_NAMES, FeatureRow, features_to_frame
 from .isoforest import IsoForestScorer
-from .lstm_ae import LstmAutoencoder, score as lstm_score
+from .lstm_ae import LstmAutoencoder
+from .lstm_ae import score as lstm_score
 
 
 @dataclass
@@ -75,10 +75,7 @@ class EnsembleScorer:
         results: list[EnsembleResult] = []
         for i, row in enumerate(feature_rows):
             blended = float(iso_w * iso_scores[i] + lstm_w * lstm_scores[i])
-            contributing = {
-                name: float(contribs_df.iloc[i][name])
-                for name in FEATURE_NAMES
-            }
+            contributing = {name: float(contribs_df.iloc[i][name]) for name in FEATURE_NAMES}
             results.append(
                 EnsembleResult(
                     mmsi=row.mmsi,
@@ -100,6 +97,6 @@ class EnsembleScorer:
         # LSTM is exported via lstm_ae.export_onnx by the training script.
 
     @classmethod
-    def load(cls, dir_: Path, *, lstm: LstmAutoencoder | None = None) -> "EnsembleScorer":
+    def load(cls, dir_: Path, *, lstm: LstmAutoencoder | None = None) -> EnsembleScorer:
         iso = IsoForestScorer.load(dir_ / "isoforest.pkl")
         return cls(iso=iso, lstm=lstm)

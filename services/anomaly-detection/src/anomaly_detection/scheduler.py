@@ -36,7 +36,7 @@ class ScoringJob:
         try:
             feature_rows = []
             sequences = []
-            async for mmsi, df in stream_active_vessel_windows(conn, since=since):
+            async for _mmsi, df in stream_active_vessel_windows(conn, since=since):
                 if len(df) < self._settings.min_positions_per_window:
                     continue
                 features = compute_features(df, now_utc=now)

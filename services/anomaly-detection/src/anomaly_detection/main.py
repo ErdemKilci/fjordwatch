@@ -35,7 +35,7 @@ async def _amain(settings: Settings, scorer: EnsembleScorer) -> None:
 
     config = uvicorn.Config(
         fastapi_app,
-        host="0.0.0.0",  # noqa: S104 (container-bound)
+        host="0.0.0.0",
         port=settings.metrics_port,
         log_level=settings.log_level.lower(),
         access_log=False,

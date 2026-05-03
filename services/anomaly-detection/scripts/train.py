@@ -16,7 +16,6 @@ import argparse
 import asyncio
 import logging
 from datetime import timedelta
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -24,8 +23,9 @@ import pandas as pd
 from anomaly_detection.config import get_settings
 from anomaly_detection.features import compute_features, features_to_frame
 from anomaly_detection.isoforest import IsoForestScorer
-from anomaly_detection.lstm_ae import T_DEFAULT, export_onnx, resample_trajectory, train as train_lstm
-from anomaly_detection.store import open_pool, list_active_vessels, read_window, utc_now
+from anomaly_detection.lstm_ae import T_DEFAULT, export_onnx, resample_trajectory
+from anomaly_detection.lstm_ae import train as train_lstm
+from anomaly_detection.store import list_active_vessels, open_pool, read_window, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -78,17 +78,19 @@ def _generate_synthetic(seed: int, n: int = 200) -> tuple[list, np.ndarray]:
         lons = base_lon + np.cumsum(rng.normal(0, 0.001, steps))
         lats = base_lat + np.cumsum(rng.normal(0, 0.001, steps))
         sog = np.clip(rng.normal(8.0, 1.5, steps), 0.0, 25.0)
-        df = pd.DataFrame({
-            "mmsi": np.full(steps, 200_000_000 + i, dtype=np.int64),
-            "ts": ts,
-            "longitude": lons,
-            "latitude": lats,
-            "sog_knots": sog,
-            "cog_deg": np.full(steps, heading),
-            "heading_deg": np.full(steps, heading),
-            "nav_status": np.zeros(steps, dtype=np.int16),
-            "msg_type": np.full(steps, 1, dtype=np.int16),
-        })
+        df = pd.DataFrame(
+            {
+                "mmsi": np.full(steps, 200_000_000 + i, dtype=np.int64),
+                "ts": ts,
+                "longitude": lons,
+                "latitude": lats,
+                "sog_knots": sog,
+                "cog_deg": np.full(steps, heading),
+                "heading_deg": np.full(steps, heading),
+                "nav_status": np.zeros(steps, dtype=np.int16),
+                "msg_type": np.full(steps, 1, dtype=np.int16),
+            }
+        )
         feature_row = compute_features(df, now_utc=base_now)
         if feature_row is None:
             continue
@@ -110,7 +112,9 @@ def main() -> None:
                 f"only {len(feature_rows)} eligible vessels in the live window; pass "
                 "--synthetic-fallback to train against generated data."
             )
-        logger.warning("falling back to synthetic data; real-data fit was %d rows", len(feature_rows))
+        logger.warning(
+            "falling back to synthetic data; real-data fit was %d rows", len(feature_rows)
+        )
         feature_rows, sequences = _generate_synthetic(args.seed)
 
     df = features_to_frame(feature_rows)

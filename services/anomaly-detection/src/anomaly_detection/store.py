@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 import psycopg
@@ -67,8 +67,15 @@ async def read_window(
     if not rows:
         return pd.DataFrame(
             columns=(
-                "mmsi", "ts", "longitude", "latitude",
-                "sog_knots", "cog_deg", "heading_deg", "nav_status", "msg_type",
+                "mmsi",
+                "ts",
+                "longitude",
+                "latitude",
+                "sog_knots",
+                "cog_deg",
+                "heading_deg",
+                "nav_status",
+                "msg_type",
             )
         )
     df = pd.DataFrame(rows)
@@ -120,7 +127,7 @@ async def write_anomalies(
 
 
 def utc_now() -> datetime:
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=UTC)
 
 
 def window_since(now: datetime, *, minutes: int) -> datetime:

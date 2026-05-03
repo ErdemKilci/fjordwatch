@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 import numpy as np
@@ -15,10 +15,10 @@ from pydantic import BaseModel, Field
 
 from .config import Settings, get_settings
 from .ensemble import EnsembleScorer
-from .features import FEATURE_NAMES, compute_features, features_to_frame
+from .features import FEATURE_NAMES, compute_features
 from .isoforest import IsoForestScorer
 from .lstm_ae import resample_trajectory
-from .store import open_pool, read_window, utc_now, window_since
+from .store import open_pool, read_window, window_since
 
 logger = logging.getLogger(__name__)
 
@@ -98,14 +98,16 @@ async def readyz(settings: Annotated[Settings, Depends(get_settings_dep)]) -> JS
         conn = await open_pool(settings.database_url)
         await conn.close()
         return JSONResponse({"status": "ready"})
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return JSONResponse({"status": "not_ready", "error": str(exc)}, status_code=503)
 
 
 @app.post("/score", response_model=ScoreResponse)
-async def score(req: ScoreRequest, settings: Annotated[Settings, Depends(get_settings_dep)]) -> ScoreResponse:
+async def score(
+    req: ScoreRequest, settings: Annotated[Settings, Depends(get_settings_dep)]
+) -> ScoreResponse:
     minutes = req.window_minutes or settings.window_minutes
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     since = window_since(now, minutes=minutes)
     conn = await open_pool(settings.database_url)
     try:
@@ -134,8 +136,6 @@ async def score(req: ScoreRequest, settings: Annotated[Settings, Depends(get_set
         window_start=features.window_start.to_pydatetime(),
         window_end=features.window_end.to_pydatetime(),
         point_count=features.point_count,
-        contributing=[
-            ContributingFeature(name=k, value=v) for k, v in result.contributing.items()
-        ],
+        contributing=[ContributingFeature(name=k, value=v) for k, v in result.contributing.items()],
         model_versions=result.model_versions,
     )

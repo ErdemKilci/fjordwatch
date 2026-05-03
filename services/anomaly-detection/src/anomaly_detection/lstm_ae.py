@@ -32,7 +32,9 @@ class TrainingSummary:
 
 
 class LstmAutoencoder(nn.Module):
-    def __init__(self, *, channels: int = CHANNELS, hidden: int = HIDDEN, sequence_length: int = T_DEFAULT) -> None:
+    def __init__(
+        self, *, channels: int = CHANNELS, hidden: int = HIDDEN, sequence_length: int = T_DEFAULT
+    ) -> None:
         super().__init__()
         self.sequence_length = sequence_length
         self.encoder = nn.LSTM(channels, hidden, batch_first=True)

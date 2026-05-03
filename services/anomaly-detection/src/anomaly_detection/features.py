@@ -103,7 +103,7 @@ def compute_features(df: pd.DataFrame, *, now_utc: pd.Timestamp) -> FeatureRow |
         mmsi=int(df["mmsi"].iloc[0]),
         window_start=df["ts"].iloc[0],
         window_end=df["ts"].iloc[-1],
-        point_count=int(len(df)),
+        point_count=len(df),
         mean_speed_knots=mean_speed,
         std_speed_knots=std_speed,
         heading_reversals=heading_reversals,

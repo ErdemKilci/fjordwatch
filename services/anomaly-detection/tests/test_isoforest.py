@@ -13,7 +13,8 @@ def test_score_in_unit_interval() -> None:
     iso = IsoForestScorer(random_state=0).fit(df)
     s = iso.score(df)
     assert s.shape == (64,)
-    assert np.all(s >= 0.0) and np.all(s <= 1.0)
+    assert np.all(s >= 0.0)
+    assert np.all(s <= 1.0)
 
 
 def test_anomalous_row_scores_higher_than_typical() -> None:
