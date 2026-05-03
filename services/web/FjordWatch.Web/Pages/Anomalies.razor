@@ -1,0 +1,112 @@
+@page "/anomalies"
+@inject ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>FjordWatch — anomalies</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pa-4">
+    <MudText Typo="Typo.h5" GutterBottom="true">Recent anomalies</MudText>
+    <MudGrid Class="mb-4" Spacing="2">
+        <MudItem xs="12" sm="4">
+            <MudNumericField T="float"
+                             Label="Min score"
+                             Value="_minScore"
+                             ValueChanged="(v => { _minScore = v; _ = LoadAsync(); })"
+                             Min="0.0f" Max="1.0f" Step="0.05f" Format="F2" />
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudNumericField T="int"
+                             Label="Lookback (hours)"
+                             Value="_hours"
+                             ValueChanged="(v => { _hours = v; _ = LoadAsync(); })"
+                             Min="1" Max="720" Step="1" />
+        </MudItem>
+        <MudItem xs="12" sm="4" Class="d-flex align-center">
+            <MudButton OnClick="LoadAsync" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Refresh">
+                Refresh
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Error">@_error</MudAlert>
+    }
+    else if (_rows.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">No anomalies match the current filter.</MudAlert>
+    }
+    else
+    {
+        <MudTable Items="_rows" Hover="true" Dense="true" Class="mt-2">
+            <HeaderContent>
+                <MudTh>Score</MudTh>
+                <MudTh>MMSI</MudTh>
+                <MudTh>Vessel</MudTh>
+                <MudTh>Window</MudTh>
+                <MudTh>Created</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Score">
+                    <MudChip T="string" Color="@ScoreColor(context.Score)" Size="Size.Small">@context.Score.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)</MudChip>
+                </MudTd>
+                <MudTd DataLabel="MMSI">@context.Mmsi</MudTd>
+                <MudTd DataLabel="Vessel">@(context.VesselName ?? "—")</MudTd>
+                <MudTd DataLabel="Window">@context.WindowStart.ToString("MM-dd HH:mm") → @context.WindowEnd.ToString("HH:mm")</MudTd>
+                <MudTd DataLabel="Created">@context.CreatedAt.ToString("u")</MudTd>
+                <MudTd>
+                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.LocationOn"
+                                   OnClick="() => FocusOnMap(context)" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    private bool _loading;
+    private string? _error;
+    private float _minScore = 0.5f;
+    private int _hours = 24;
+    private IReadOnlyList<AnomalyDto> _rows = [];
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var since = DateTimeOffset.UtcNow - TimeSpan.FromHours(_hours);
+            _rows = await Api.GetAnomaliesAsync(since, _minScore, limit: 200);
+        }
+        catch (HttpRequestException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void FocusOnMap(AnomalyDto a)
+    {
+        var fromIso = Uri.EscapeDataString(a.WindowStart.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture));
+        var toIso = Uri.EscapeDataString(a.WindowEnd.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture));
+        Nav.NavigateTo($"/?focus={a.Mmsi}&from={fromIso}&to={toIso}");
+    }
+
+    private static Color ScoreColor(float score) => score switch
+    {
+        >= 0.8f => Color.Error,
+        >= 0.5f => Color.Warning,
+        _ => Color.Default,
+    };
+}
