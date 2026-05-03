@@ -1,0 +1,103 @@
+@inject AgentClient Agent
+
+<div class="agent-chat @(_open ? "open" : "closed")">
+    @if (_open)
+    {
+        <MudPaper Class="d-flex flex-column" Elevation="8" Style="width: 380px; height: 540px; max-height: 70vh;">
+            <div class="d-flex align-center pa-2" style="border-bottom: 1px solid var(--mud-palette-divider);">
+                <MudIcon Icon="@Icons.Material.Filled.Chat" Class="mr-2" />
+                <MudText Typo="Typo.subtitle1" Class="flex-grow-1">FjordWatch agent</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => _open = false" />
+            </div>
+            <div class="agent-history flex-grow-1 pa-2" style="overflow-y: auto;">
+                @foreach (var msg in _messages)
+                {
+                    <div class="@($"agent-msg agent-msg-{msg.Role}")">
+                        <MudText Typo="Typo.body2">@msg.Text</MudText>
+                        @if (msg.Citations is { Count: > 0 })
+                        {
+                            <div class="agent-citations">
+                                @foreach (var c in msg.Citations)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Tertiary" Class="mr-1 mt-1">@c.Source: @c.Description</MudChip>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                @if (_busy)
+                {
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-2" />
+                }
+            </div>
+            <div class="d-flex pa-2" style="border-top: 1px solid var(--mud-palette-divider);">
+                <MudTextField T="string"
+                              @bind-Value="_input"
+                              Placeholder="Ask about vessels, anomalies, or regulations…"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              OnKeyDown="OnKeyDown"
+                              Disabled="_busy"
+                              Class="flex-grow-1" />
+                <MudIconButton Icon="@Icons.Material.Filled.Send" Color="Color.Primary" OnClick="Send" Disabled="_busy" />
+            </div>
+        </MudPaper>
+    }
+    else
+    {
+        <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Chat" OnClick="() => _open = true" />
+    }
+</div>
+
+@code {
+    private bool _open;
+    private bool _busy;
+    private string _input = "";
+    private string? _conversationId;
+    private readonly List<ChatBubble> _messages = [];
+
+    private async Task Send()
+    {
+        if (_busy || string.IsNullOrWhiteSpace(_input))
+        {
+            return;
+        }
+        var question = _input.Trim();
+        _input = "";
+        _messages.Add(new ChatBubble("user", question, []));
+        _busy = true;
+        StateHasChanged();
+        try
+        {
+            var resp = await Agent.AskAsync(question, _conversationId);
+            if (resp is null)
+            {
+                _messages.Add(new ChatBubble("error", "The agent could not respond. Try again.", []));
+            }
+            else
+            {
+                _conversationId = resp.ConversationId;
+                _messages.Add(new ChatBubble("assistant", resp.Reply, resp.Citations));
+            }
+        }
+        catch (Exception ex)
+        {
+            _messages.Add(new ChatBubble("error", $"agent failed: {ex.Message}", []));
+        }
+        finally
+        {
+            _busy = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await Send();
+        }
+    }
+
+    private sealed record ChatBubble(string Role, string Text, IReadOnlyList<Citation> Citations);
+}
