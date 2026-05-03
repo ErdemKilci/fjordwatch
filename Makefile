@@ -55,14 +55,27 @@ restart:  ## Restart the stack
 	$(MAKE) down
 	$(MAKE) up
 
-test:  ## Run all language test suites (placeholder until services exist)
-	@echo "test: no service test suites wired yet (phase 0)"
+test: test-rust  ## Run all language test suites
 
-lint:  ## Run all linters (placeholder until services exist)
-	@echo "lint: no service linters wired yet (phase 0)"
+test-rust:  ## Run Rust test suite for ais-ingestion
+	cd services/ais-ingestion && cargo test --workspace
 
-format:  ## Run all formatters (placeholder until services exist)
-	@echo "format: no service formatters wired yet (phase 0)"
+lint: lint-rust  ## Run all linters
+
+lint-rust:  ## Run cargo fmt --check + cargo clippy -D warnings
+	cd services/ais-ingestion && cargo fmt --all -- --check
+	cd services/ais-ingestion && cargo clippy --workspace --all-targets -- -D warnings
+
+format: format-rust  ## Run all formatters
+
+format-rust:  ## Run cargo fmt
+	cd services/ais-ingestion && cargo fmt --all
+
+migrate:  ## Run database migrations once (Flyway)
+	$(COMPOSE) run --rm db-migrate
+
+ais-replay:  ## Start ais-ingestion replaying the bundled NMEA fixture
+	AIS_REPLAY_FILE=/fixtures/sample.nmea $(COMPOSE) up -d --build ais-ingestion
 
 seed:  ## Seed databases / object storage with fixtures (placeholder)
 	@echo "seed: no fixtures yet (phase 0)"

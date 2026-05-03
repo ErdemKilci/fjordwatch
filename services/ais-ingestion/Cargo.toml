@@ -1,0 +1,94 @@
+[package]
+name = "ais-ingestion"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+description = "FjordWatch AIS ingestion service: NMEA decoder, Postgres writer, Redis Streams publisher"
+license = "MIT"
+publish = false
+
+[[bin]]
+name = "ais-ingestion"
+path = "src/main.rs"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.42", features = ["full"] }
+tokio-util = { version = "0.7", features = ["codec"] }
+futures = "0.3"
+
+# Web/HTTP for /healthz and /metrics
+axum = "0.7"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["trace"] }
+
+# Database
+sqlx = { version = "0.8", default-features = false, features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "chrono",
+    "json",
+    "macros",
+    "migrate",
+] }
+
+# Redis
+redis = { version = "0.27", default-features = false, features = [
+    "tokio-comp",
+    "tokio-rustls-comp",
+    "streams",
+    "connection-manager",
+] }
+
+# AIS / NMEA decoding
+ais = "0.10"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# CLI
+clap = { version = "4.5", features = ["derive", "env"] }
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Logging / observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+metrics = "0.24"
+metrics-exporter-prometheus = { version = "0.16", default-features = false }
+
+# Errors
+anyhow = "1"
+thiserror = "2"
+
+# Misc
+once_cell = "1"
+bytes = "1"
+
+[dev-dependencies]
+tokio = { version = "1.42", features = ["full", "test-util"] }
+pretty_assertions = "1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+
+[profile.dev]
+opt-level = 0
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"

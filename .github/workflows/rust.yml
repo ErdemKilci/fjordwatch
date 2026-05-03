@@ -1,0 +1,53 @@
+name: rust
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/ais-ingestion/**"
+      - ".github/workflows/rust.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "services/ais-ingestion/**"
+      - ".github/workflows/rust.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  rust:
+    name: fmt + clippy + test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: services/ais-ingestion
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry and target
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services/ais-ingestion
+
+      - name: cargo fmt --check
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: cargo test
+        run: cargo test --workspace --all-targets
