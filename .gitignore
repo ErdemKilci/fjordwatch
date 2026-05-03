@@ -1,0 +1,125 @@
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Editors / IDEs ----
+.vscode/
+!.vscode/settings.json.example
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- Env / secrets ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+.secrets/
+
+# ---- Logs / runtime ----
+*.log
+logs/
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ---- Rust ----
+target/
+**/target/
+Cargo.lock.bak
+*.rs.bk
+
+# ---- .NET ----
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.nupkg
+*.snupkg
+.vs/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+publish/
+PublishProfiles/
+TestResults/
+*.coverage
+*.coveragexml
+artifacts/
+launchSettings.json
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+ENV/
+.eggs/
+*.egg-info/
+*.egg
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.pyright/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# ---- Node / TypeScript ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+.next/
+.nuxt/
+.cache/
+coverage/
+playwright-report/
+test-results/
+.playwright/
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+
+# ---- ML artifacts ----
+mlruns/
+mlartifacts/
+*.ckpt
+*.pt
+*.onnx
+*.pkl
+!**/fixtures/*.pkl
+
+# ---- Data ----
+data/raw/
+data/interim/
+data/processed/
+*.tif
+*.tiff
+*.zip
+*.tar
+*.tar.gz
+!**/fixtures/*.tif
+
+# ---- Docker ----
+.docker/
+
+# ---- Generated docs ----
+docs/_build/
+site/

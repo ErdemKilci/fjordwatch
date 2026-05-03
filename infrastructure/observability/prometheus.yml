@@ -1,0 +1,14 @@
+# Phase 0 placeholder. Full scrape configuration lands in phase 6.
+# Each backend service exposes /metrics on its own port; targets are added
+# as services come online.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: fjordwatch-local
+    environment: dev
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

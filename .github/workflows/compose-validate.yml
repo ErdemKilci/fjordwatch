@@ -1,0 +1,33 @@
+name: compose-validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate compose configuration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Seed environment
+        run: cp .env.example .env
+
+      - name: Validate base compose file
+        run: docker compose -f docker-compose.yml config --quiet
+
+      - name: Validate observability overlay
+        run: docker compose -f docker-compose.yml -f docker-compose.observability.yml config --quiet
+
+      - name: Print resolved service list
+        run: docker compose -f docker-compose.yml config --services

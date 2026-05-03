@@ -1,0 +1,157 @@
+# FjordWatch local stack.
+# Phase 0: only infrastructure (Postgres, Redis, MinIO, Ollama) and stub
+# services. Real service images replace the stubs as each phase lands.
+#
+# Usage:
+#   make env && make up
+#
+# Optional observability stack lives in docker-compose.observability.yml.
+
+name: fjordwatch
+
+x-stub: &stub
+  image: busybox:1.36
+  restart: unless-stopped
+  command:
+    - sh
+    - -c
+    - |
+      echo "[$$(date -u +%FT%TZ)] $${SERVICE_NAME:-stub} ready"
+      while true; do sleep 30; echo "[$$(date -u +%FT%TZ)] $${SERVICE_NAME:-stub} alive"; done
+  healthcheck:
+    test: ["CMD", "true"]
+    interval: 15s
+    timeout: 3s
+    retries: 3
+    start_period: 5s
+
+services:
+  # ---- Infrastructure -----------------------------------------------------
+  postgres:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fjordwatch}
+      POSTGRES_USER: ${POSTGRES_USER:-fjordwatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fjordwatch_dev_only_change_me}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-fjordwatch} -d $${POSTGRES_DB:-fjordwatch}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fjordwatch}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fjordwatch_dev_only_change_me}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  ollama:
+    image: ollama/ollama:0.4.7
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---- Stub backend services (replaced phase by phase) -------------------
+  ais-ingestion:
+    <<: *stub
+    environment:
+      SERVICE_NAME: ais-ingestion
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  core-api:
+    <<: *stub
+    environment:
+      SERVICE_NAME: core-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  ship-detection:
+    <<: *stub
+    environment:
+      SERVICE_NAME: ship-detection
+    depends_on:
+      minio:
+        condition: service_healthy
+
+  anomaly-detection:
+    <<: *stub
+    environment:
+      SERVICE_NAME: anomaly-detection
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  sar-fetcher:
+    <<: *stub
+    environment:
+      SERVICE_NAME: sar-fetcher
+    depends_on:
+      minio:
+        condition: service_healthy
+
+  web:
+    <<: *stub
+    environment:
+      SERVICE_NAME: web
+    depends_on:
+      core-api:
+        condition: service_started
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+  ollama-data:
+
+networks:
+  default:
+    name: fjordwatch
