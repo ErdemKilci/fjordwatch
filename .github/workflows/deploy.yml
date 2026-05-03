@@ -1,0 +1,134 @@
+name: deploy
+
+# Manual dispatch only by design. An auto-deploy on every push to main would
+# surprise the developer with cloud charges; opt-in is the right default for
+# a portfolio project.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment name (suffix on Azure resource names)"
+        required: true
+        type: string
+        default: dev
+      dry_run:
+        description: "If true, run `az deployment group what-if` instead of `create`."
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: fjordwatch-${{ inputs.environment }}-rg
+  AZURE_LOCATION: norwayeast
+
+jobs:
+  bicep-validate:
+    name: Bicep what-if
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Ensure resource group
+        run: |
+          az group create \
+            --name "$AZURE_RESOURCE_GROUP" \
+            --location "$AZURE_LOCATION"
+
+      - name: Bicep what-if
+        run: |
+          az deployment group what-if \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --template-file infrastructure/bicep/main.bicep \
+            --parameters infrastructure/bicep/parameters.${{ inputs.environment }}.bicepparam \
+            --parameters postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}"
+
+  build-and-push:
+    name: Build images and push to ACR
+    runs-on: ubuntu-24.04
+    needs: bicep-validate
+    if: ${{ inputs.dry_run == false }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        service:
+          - name: ais-ingestion
+            context: services/ais-ingestion
+          - name: core-api
+            context: services/core-api
+          - name: web
+            context: services/web
+          - name: anomaly-detection
+            context: services/anomaly-detection
+          - name: ship-detection
+            context: services/ship-detection
+          - name: sar-fetcher
+            context: services/sar-fetcher
+          - name: embedding
+            context: services/embedding
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Discover ACR name
+        id: acr
+        run: |
+          name=$(az acr list \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --query '[0].name' --output tsv)
+          if [ -z "$name" ]; then
+            echo "no ACR in $AZURE_RESOURCE_GROUP; run with dry_run=true first or apply Bicep" >&2
+            exit 1
+          fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: az acr build
+        run: |
+          az acr build \
+            --registry "${{ steps.acr.outputs.name }}" \
+            --image "${{ matrix.service.name }}:${{ github.sha }}" \
+            --image "${{ matrix.service.name }}:latest" \
+            --file "${{ matrix.service.context }}/Dockerfile" \
+            "${{ matrix.service.context }}"
+
+  deploy:
+    name: Apply Bicep
+    runs-on: ubuntu-24.04
+    needs: build-and-push
+    if: ${{ inputs.dry_run == false }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Apply Bicep
+        run: |
+          az deployment group create \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --template-file infrastructure/bicep/main.bicep \
+            --parameters infrastructure/bicep/parameters.${{ inputs.environment }}.bicepparam \
+            --parameters postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+            --parameters imageTag="${{ github.sha }}"

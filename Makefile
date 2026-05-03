@@ -104,3 +104,42 @@ clean:  ## Remove volumes and orphaned containers
 	$(COMPOSE) down --volumes --remove-orphans
 
 reset: clean up  ## Full reset: clean then bring back up
+
+# ---- Phase 7: optional Azure deployment ------------------------------------
+# Wraps `az deployment group create/what-if` for the developer's own
+# subscription. Requires az CLI + bicep CLI on the host. Set DRY_RUN=1 to run
+# what-if instead of apply. POSTGRES_ADMIN_PASSWORD must be in env.
+
+AZURE_LOCATION ?= norwayeast
+AZURE_ENVIRONMENT ?= dev
+AZURE_RESOURCE_GROUP ?= fjordwatch-$(AZURE_ENVIRONMENT)-rg
+
+deploy: deploy-rg deploy-bicep deploy-images  ## Full Azure deployment (apply or what-if when DRY_RUN=1)
+
+deploy-rg:  ## Create the Azure resource group
+	az group create --name $(AZURE_RESOURCE_GROUP) --location $(AZURE_LOCATION)
+
+deploy-bicep:  ## Apply (or what-if) Bicep templates
+	@if [ -z "$$POSTGRES_ADMIN_PASSWORD" ]; then echo "POSTGRES_ADMIN_PASSWORD env var required"; exit 1; fi
+	@if [ "$$DRY_RUN" = "1" ]; then \
+		az deployment group what-if \
+			--resource-group $(AZURE_RESOURCE_GROUP) \
+			--template-file infrastructure/bicep/main.bicep \
+			--parameters infrastructure/bicep/parameters.$(AZURE_ENVIRONMENT).bicepparam \
+			--parameters postgresAdminPassword="$$POSTGRES_ADMIN_PASSWORD"; \
+	else \
+		az deployment group create \
+			--resource-group $(AZURE_RESOURCE_GROUP) \
+			--template-file infrastructure/bicep/main.bicep \
+			--parameters infrastructure/bicep/parameters.$(AZURE_ENVIRONMENT).bicepparam \
+			--parameters postgresAdminPassword="$$POSTGRES_ADMIN_PASSWORD"; \
+	fi
+
+deploy-images:  ## Build and push images to ACR via az acr build
+	@if [ "$$DRY_RUN" = "1" ]; then echo "DRY_RUN: skipping image build"; exit 0; fi
+	@acr=$$(az acr list --resource-group $(AZURE_RESOURCE_GROUP) --query '[0].name' -o tsv); \
+	if [ -z "$$acr" ]; then echo "no ACR in $(AZURE_RESOURCE_GROUP); run deploy-bicep first"; exit 1; fi; \
+	for svc in ais-ingestion core-api web anomaly-detection ship-detection sar-fetcher embedding; do \
+		echo "==> building $$svc"; \
+		az acr build --registry $$acr --image $$svc:latest --file services/$$svc/Dockerfile services/$$svc; \
+	done
