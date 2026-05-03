@@ -23,6 +23,7 @@ var databaseUrl = builder.Configuration.GetConnectionString("Postgres")
 builder.Services.AddSingleton(_ =>
     new NpgsqlDataSourceBuilder(NpgsqlConnectionStringConverter.ToKeyValue(databaseUrl)).Build());
 builder.Services.AddScoped<IVesselRepository, PostgresVesselRepository>();
+builder.Services.AddScoped<IAnomalyRepository, PostgresAnomalyRepository>();
 
 var redisUrl = builder.Configuration["REDIS_URL"] ?? "redis://redis:6379/0";
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
@@ -84,6 +85,7 @@ app.MapGet("/readyz", async (IConnectionMultiplexer redis, NpgsqlDataSource pg, 
 app.MapPrometheusScrapingEndpoint("/metrics");
 
 app.MapVesselEndpoints();
+app.MapAnomalyEndpoints();
 
 app.MapHub<VesselsHub>("/hubs/vessels");
 

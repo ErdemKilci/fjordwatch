@@ -175,9 +175,25 @@ services:
         condition: service_healthy
 
   anomaly-detection:
-    <<: *stub
+    build:
+      context: ./services/anomaly-detection
+      dockerfile: Dockerfile
+    image: fjordwatch/anomaly-detection:dev
+    restart: unless-stopped
     environment:
-      SERVICE_NAME: anomaly-detection
+      DATABASE_URL: postgres://${POSTGRES_USER:-fjordwatch}:${POSTGRES_PASSWORD:-fjordwatch_dev_only_change_me}@postgres:5432/${POSTGRES_DB:-fjordwatch}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      MODEL_DIR: /app/models
+      ANOMALY_WINDOW_MINUTES: ${ANOMALY_WINDOW_MINUTES:-360}
+      SCORER_INTERVAL_SECONDS: ${SCORER_INTERVAL_SECONDS:-600}
+      MIN_POSITIONS_PER_WINDOW: ${MIN_POSITIONS_PER_WINDOW:-10}
+      SCORE_FLOOR: ${SCORE_FLOOR:-0.05}
+      ANOMALY_METRICS_PORT: "8002"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${ANOMALY_DETECTION_PORT:-8002}:8002"
+    volumes:
+      - anomaly-models:/app/models
     depends_on:
       postgres:
         condition: service_healthy
@@ -209,6 +225,7 @@ volumes:
   redis-data:
   minio-data:
   ollama-data:
+  anomaly-models:
 
 networks:
   default:
