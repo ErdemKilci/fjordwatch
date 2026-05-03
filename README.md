@@ -132,6 +132,13 @@ Kystverket AIS (NLOD 2.0), Copernicus Sentinel-1 (Copernicus open license),
 OpenStreetMap + OpenSeaMap tiles (ODbL), and curated regulation excerpts
 under their respective open licenses.
 
+> **Note on AIS coverage.** The public Kystverket TCP feed at
+> `153.44.253.27:5631` publishes a regional sample. In practice, the
+> south-west coast from Stavanger to Bergen. The architecture is
+> region-agnostic; pointing `AIS_SOURCE_HOST`/`AIS_SOURCE_PORT` at a full
+> national feed (e.g. via [Kystdatahuset](https://kystdatahuset.no))
+> immediately lights up Oslofjord and the rest of Norway.
+
 ## Documentation
 
 - [Specification](./FjordWatch-SPEC.md): the full project spec, including phase-by-phase build order.
