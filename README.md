@@ -16,6 +16,8 @@ the data. Six services, one `make up` away.
 [![python](https://github.com/ErdemKilci/fjordwatch/actions/workflows/python.yml/badge.svg)](https://github.com/ErdemKilci/fjordwatch/actions/workflows/python.yml)
 [![compose-validate](https://github.com/ErdemKilci/fjordwatch/actions/workflows/compose-validate.yml/badge.svg)](https://github.com/ErdemKilci/fjordwatch/actions/workflows/compose-validate.yml)
 
+![FjordWatch — live vessels around Bergen with the agent answering a tool-cited question](docs/images/agent-demo.png)
+
 ## What it does
 
 - **Live map.** Every Norwegian-coast vessel that broadcasts AIS appears on a Leaflet map within seconds of the message hitting the wire. Click a vessel to see its 24-hour track and metadata.
