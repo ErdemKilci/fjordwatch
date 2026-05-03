@@ -72,3 +72,43 @@ or operationally meaningful.**
 
 This is a research and learning project. The disclaimers in
 [`DISCLAIMER.md`](../DISCLAIMER.md) and on the `/about` page apply in full.
+
+## Military vessels
+
+ITU-R M.1371-5 defines ship type **35 (Military)** as a self-classified
+category an operator may set on their AIS transponder. When a Norwegian
+naval vessel is on a sensitive operation it typically operates with AIS
+**off**; when AIS is **on** the broadcast is voluntary, unencrypted, and
+publicly receivable on VHF Channels A and B. Public AIS aggregators
+(MarineTraffic, VesselFinder, FleetMon) all surface these broadcasts.
+
+FjordWatch renders the Military category in the legend for ITU
+completeness. **It does not run any targeted analytics on military
+vessels:**
+
+- No per-vessel alerts on type-35 hulls.
+- The anomaly detector treats all ship types uniformly; the ensemble
+  has no special branch that profiles military patterns.
+- The dark-vessel correlator does not specifically pair SAR detections
+  with type-35 broadcasts. A SAR detection without an AIS match is
+  flagged dark regardless of whether nearby AIS broadcasts include
+  type 35.
+- The agent's tools (nearest_vessels, vessel_history, recent_anomalies,
+  dark_vessels, search_regulations) accept ship-type filters for UI
+  ergonomics but do not weight, prioritize, or hide military hulls.
+
+If a deployment of FjordWatch is observed deriving operational
+intelligence about Norwegian Armed Forces movements, that is a misuse
+of the tool. Refer to:
+
+- Norwegian Security Act (Sikkerhetsloven 2018) for what counts as
+  classified information.
+- Norwegian Penal Code chapters 17 and 18 (Straffeloven) for the
+  espionage and treason offence definitions.
+- Forsvaret and Sjøforsvaret guidance on AIS handling.
+
+Public AIS data is not classified by definition (the operator chose to
+broadcast), so simply rendering it does not engage these statutes. But
+combining FjordWatch outputs with non-public sources to derive
+operational patterns about military movements would, and that is
+explicitly outside the scope and acceptable use of this project.

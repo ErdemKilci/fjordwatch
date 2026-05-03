@@ -143,6 +143,15 @@ under their respective open licenses.
 > national feed (e.g. via [Kystdatahuset](https://kystdatahuset.no))
 > immediately lights up Oslofjord and the rest of Norway.
 
+> **Note on military vessels.** Vessels broadcasting ITU-R M.1371-5 ship
+> type 35 (Military) appear with the same UX as any other category.
+> FjordWatch performs no targeted analytics on them: no per-vessel
+> alerts, no SAR-to-AIS correlation specifically for military hulls, no
+> anomaly profiling of military patterns. The category exists in the
+> legend for ITU completeness only. See
+> [docs/dark-vessel-limitations.md](./docs/dark-vessel-limitations.md)
+> and [DISCLAIMER.md](./DISCLAIMER.md).
+
 ## Documentation
 
 - [Specification](./FjordWatch-SPEC.md): the full project spec, including phase-by-phase build order.
