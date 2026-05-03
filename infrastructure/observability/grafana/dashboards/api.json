@@ -1,0 +1,65 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "HTTP request rate",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum by (http_response_status_code) (rate(http_server_request_duration_seconds_count{job=\"core-api\"}[1m]))", "legendFormat": "{{http_response_status_code}}", "refId": "A" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+    },
+    {
+      "title": "HTTP request duration p95",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket{job=\"core-api\"}[5m])))", "legendFormat": "{{http_route}}", "refId": "A" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "Redis stream relay",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "rate(relay_messages_in_total[1m])", "legendFormat": "in", "refId": "A" },
+        { "expr": "rate(relay_messages_out_total[1m])", "legendFormat": "out", "refId": "B" },
+        { "expr": "rate(relay_messages_dropped_total[1m])", "legendFormat": "dropped", "refId": "C" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "title": ".NET runtime — GC + working set",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "process_runtime_dotnet_gc_collections_count_total{job=\"core-api\"}", "legendFormat": "gc gen{{generation}}", "refId": "A" },
+        { "expr": "process_working_set_bytes{job=\"core-api\"}", "legendFormat": "working set", "refId": "B" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["fjordwatch", "api"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "FjordWatch — Core API",
+  "uid": "fjordwatch-api",
+  "version": 1,
+  "weekStart": ""
+}
