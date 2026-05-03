@@ -1,0 +1,53 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "/agent/chat request rate",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "sum(rate(http_server_request_duration_seconds_count{http_route=\"/agent/chat\"}[1m]))", "legendFormat": "req/s", "refId": "A" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+    },
+    {
+      "title": "/agent/chat latency p95 + p99",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/agent/chat\"}[5m])))", "legendFormat": "p95", "refId": "A" },
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_seconds_bucket{http_route=\"/agent/chat\"}[5m])))", "legendFormat": "p99", "refId": "B" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "Embedding service latency",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(starlette_requests_duration_seconds_bucket{path=\"/embed\", job=\"embedding\"}[5m])))", "legendFormat": "embed p95", "refId": "A" }
+      ],
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["fjordwatch", "agent"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "FjordWatch — Agent",
+  "uid": "fjordwatch-agent",
+  "version": 1,
+  "weekStart": ""
+}

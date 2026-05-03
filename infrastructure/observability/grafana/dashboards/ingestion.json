@@ -1,0 +1,66 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "AIS lines/sec",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "rate(ais_lines_in_total[1m])", "legendFormat": "lines/s", "refId": "A" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "title": "Decoded vs decode errors",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "rate(ais_decoded_total[1m])", "legendFormat": "decoded", "refId": "A" },
+        { "expr": "rate(ais_decode_errors_total[1m])", "legendFormat": "decode errors", "refId": "B" },
+        { "expr": "rate(ais_partial_total[1m])", "legendFormat": "partial fragments", "refId": "C" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "title": "Postgres rows written/sec",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "rate(ais_rows_written_total[1m])", "legendFormat": "rows/s", "refId": "A" },
+        { "expr": "rate(ais_batches_committed_total[1m])", "legendFormat": "batches/s", "refId": "B" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "title": "Source connection",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "rate(ais_source_reconnects_total[5m])", "legendFormat": "reconnects/min", "refId": "A" },
+        { "expr": "rate(ais_source_connect_errors_total[5m])", "legendFormat": "connect errors/min", "refId": "B" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["fjordwatch", "ingestion"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "FjordWatch — AIS ingestion",
+  "uid": "fjordwatch-ingestion",
+  "version": 1,
+  "weekStart": ""
+}
