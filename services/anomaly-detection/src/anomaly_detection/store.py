@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import pandas as pd
 import psycopg
@@ -20,8 +21,16 @@ from .ensemble import EnsembleResult
 
 async def open_pool(database_url: str) -> psycopg.AsyncConnection:
     """Open a single async connection. The scheduler is single-threaded;
-    pooling adds complexity for no benefit at our throughput."""
-    return await psycopg.AsyncConnection.connect(database_url, row_factory=dict_row)
+    pooling adds complexity for no benefit at our throughput.
+
+    psycopg's row_factory typing claims AsyncConnection wants AsyncRowFactory,
+    but ``dict_row`` is documented to work for both flavors at runtime; we
+    silence mypy locally since the override would be wrong elsewhere.
+    """
+    return await psycopg.AsyncConnection.connect(
+        database_url,
+        row_factory=dict_row,  # type: ignore[arg-type]
+    )
 
 
 async def list_active_vessels(
@@ -35,7 +44,7 @@ async def list_active_vessels(
             "SELECT DISTINCT mmsi FROM positions WHERE ts >= %s",
             (since,),
         )
-        rows = await cur.fetchall()
+        rows: list[Any] = await cur.fetchall()
     return [int(row["mmsi"]) for row in rows]
 
 

@@ -12,6 +12,7 @@ The output is a single feature row per vessel.
 
 from __future__ import annotations
 
+import datetime
 from dataclasses import dataclass
 
 import numpy as np
@@ -71,8 +72,16 @@ FEATURE_NAMES: tuple[str, ...] = (
 )
 
 
-def compute_features(df: pd.DataFrame, *, now_utc: pd.Timestamp) -> FeatureRow | None:
+def compute_features(
+    df: pd.DataFrame,
+    *,
+    now_utc: pd.Timestamp | datetime.datetime,
+) -> FeatureRow | None:
     """Compute the feature row for a single vessel.
+
+    ``now_utc`` may be a pandas ``Timestamp`` or a stdlib ``datetime``; the
+    callers in :mod:`scheduler` and :mod:`api` use stdlib datetimes, while
+    tests use pandas timestamps.
 
     Returns ``None`` if the input has fewer than two distinct timestamps,
     which happens for vessels that have just started broadcasting and offer
@@ -97,7 +106,10 @@ def compute_features(df: pd.DataFrame, *, now_utc: pd.Timestamp) -> FeatureRow |
     stop_seconds = _stop_duration_seconds(df["ts"], sog)
     entropy = _heading_entropy(heading)
 
-    seconds_since_last_fix = float((now_utc - df["ts"].iloc[-1]).total_seconds())
+    now_ts = pd.Timestamp(now_utc)
+    if now_ts.tz is None:
+        now_ts = now_ts.tz_localize("UTC")
+    seconds_since_last_fix = float((now_ts - df["ts"].iloc[-1]).total_seconds())
 
     return FeatureRow(
         mmsi=int(df["mmsi"].iloc[0]),

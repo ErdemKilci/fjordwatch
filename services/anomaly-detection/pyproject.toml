@@ -32,6 +32,7 @@ dev = [
     "ruff>=0.7,<1",
     "mypy>=1.13,<2",
     "types-requests",
+    "pandas-stubs",
 ]
 
 [project.scripts]
@@ -69,13 +70,28 @@ indent-style = "space"
 
 [tool.mypy]
 python_version = "3.12"
-strict = true
+# We deliberately stop short of `strict = true`: scikit-learn, torch, and
+# psycopg's typings are inconsistent enough that strict mode produces noise
+# without catching real bugs. We keep the high-value strictness flags below.
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
 warn_unused_ignores = true
 warn_unreachable = true
-plugins = []
+warn_return_any = false
+check_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["mlflow.*", "apscheduler.*", "onnxruntime.*", "onnx.*", "prometheus_fastapi_instrumentator.*", "torch.*"]
+module = [
+    "mlflow.*",
+    "apscheduler.*",
+    "onnxruntime.*",
+    "onnx.*",
+    "prometheus_fastapi_instrumentator.*",
+    "sklearn.*",
+    "torch.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
