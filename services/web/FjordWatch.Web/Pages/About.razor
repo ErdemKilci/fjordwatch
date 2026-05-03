@@ -1,0 +1,23 @@
+@page "/about"
+
+<PageTitle>About FjordWatch</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+    <MudText Typo="Typo.h4" GutterBottom="true">FjordWatch</MudText>
+    <MudText Class="mb-4">
+        Open-source maritime intelligence platform for the Norwegian coast. Live AIS from Kystverket,
+        Sentinel-1 SAR dark-vessel detection, trajectory anomaly scoring, and a natural-language
+        agent over the data.
+    </MudText>
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        Research and learning project only. Not for operational use, surveillance, or any form of
+        targeting. Independent of TOMRA ASA and any other organization mentioned. See
+        <MudLink Href="https://github.com/ErdemKilci/fjordwatch/blob/main/DISCLAIMER.md" Target="_blank">DISCLAIMER.md</MudLink>.
+    </MudAlert>
+    <MudText Typo="Typo.h6" GutterBottom="true">Data sources</MudText>
+    <MudText>
+        Norwegian Coastal Administration AIS (NLOD), OpenStreetMap, OpenSeaMap, Copernicus Sentinel-1
+        for SAR. Licenses are documented in
+        <MudLink Href="https://github.com/ErdemKilci/fjordwatch/blob/main/docs/data-sources.md" Target="_blank">docs/data-sources.md</MudLink>.
+    </MudText>
+</MudContainer>

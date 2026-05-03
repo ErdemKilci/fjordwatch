@@ -143,9 +143,21 @@ services:
         condition: service_completed_successfully
 
   core-api:
-    <<: *stub
+    build:
+      context: ./services/core-api
+      dockerfile: Dockerfile
+    image: fjordwatch/core-api:dev
+    restart: unless-stopped
     environment:
-      SERVICE_NAME: core-api
+      DATABASE_URL: postgres://${POSTGRES_USER:-fjordwatch}:${POSTGRES_PASSWORD:-fjordwatch_dev_only_change_me}@postgres:5432/${POSTGRES_DB:-fjordwatch}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      AIS_STREAM: ${AIS_STREAM:-ais:positions}
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5000}
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+    ports:
+      - "${CORE_API_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -181,9 +193,13 @@ services:
         condition: service_healthy
 
   web:
-    <<: *stub
-    environment:
-      SERVICE_NAME: web
+    build:
+      context: ./services/web
+      dockerfile: Dockerfile
+    image: fjordwatch/web:dev
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-5000}:8080"
     depends_on:
       core-api:
         condition: service_started

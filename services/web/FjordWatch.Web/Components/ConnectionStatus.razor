@@ -1,0 +1,39 @@
+@implements IDisposable
+@inject VesselsHubClient Hub
+
+<MudChip T="string" Color="@Color" Size="Size.Small" Label="true">@Label</MudChip>
+
+@code {
+    private Color Color =>
+        Hub.State switch
+        {
+            Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Connected => MudBlazor.Color.Success,
+            Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Connecting => MudBlazor.Color.Warning,
+            Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Reconnecting => MudBlazor.Color.Warning,
+            Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Disconnected => MudBlazor.Color.Error,
+            _ => MudBlazor.Color.Default,
+        };
+
+    private string Label =>
+        Hub.State switch
+        {
+            Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Connected => "live",
+            Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Connecting => "connecting…",
+            Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Reconnecting => "reconnecting…",
+            Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Disconnected => "offline",
+            _ => "unknown",
+        };
+
+    protected override void OnInitialized()
+    {
+        Hub.OnStateChanged += HandleStateChanged;
+    }
+
+    private void HandleStateChanged(Microsoft.AspNetCore.SignalR.Client.HubConnectionState _) =>
+        InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Hub.OnStateChanged -= HandleStateChanged;
+    }
+}

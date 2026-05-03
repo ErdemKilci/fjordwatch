@@ -1,0 +1,69 @@
+<div class="vessel-side-panel">
+    <MudPaper Class="pa-4" Elevation="6">
+        <div class="d-flex align-center mb-2">
+            <MudText Typo="Typo.h6" Class="flex-grow-1">@Vessel.Name ?? "Unknown vessel"</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="OnCloseClicked" />
+        </div>
+        <MudChip T="string" Color="Color.Primary" Size="Size.Small">@Vessel.Category</MudChip>
+        @if (Vessel.ShipType is not null)
+        {
+            <MudText Typo="Typo.caption" Class="ml-2">type @Vessel.ShipType</MudText>
+        }
+        <MudDivider Class="my-3" />
+        <MudGrid Spacing="2">
+            <MudItem xs="6"><MudText Typo="Typo.subtitle2">MMSI</MudText></MudItem>
+            <MudItem xs="6"><MudText>@Vessel.Mmsi</MudText></MudItem>
+            @if (Vessel.Imo is not null)
+            {
+                <MudItem xs="6"><MudText Typo="Typo.subtitle2">IMO</MudText></MudItem>
+                <MudItem xs="6"><MudText>@Vessel.Imo</MudText></MudItem>
+            }
+            @if (!string.IsNullOrWhiteSpace(Vessel.CallSign))
+            {
+                <MudItem xs="6"><MudText Typo="Typo.subtitle2">Call sign</MudText></MudItem>
+                <MudItem xs="6"><MudText>@Vessel.CallSign</MudText></MudItem>
+            }
+            @if (!string.IsNullOrWhiteSpace(Vessel.Destination))
+            {
+                <MudItem xs="6"><MudText Typo="Typo.subtitle2">Destination</MudText></MudItem>
+                <MudItem xs="6"><MudText>@Vessel.Destination</MudText></MudItem>
+            }
+            @if (Vessel.Eta is not null)
+            {
+                <MudItem xs="6"><MudText Typo="Typo.subtitle2">ETA</MudText></MudItem>
+                <MudItem xs="6"><MudText>@Vessel.Eta.Value.ToString("u")</MudText></MudItem>
+            }
+            <MudItem xs="6"><MudText Typo="Typo.subtitle2">Last seen</MudText></MudItem>
+            <MudItem xs="6"><MudText>@Vessel.LastSeen.ToString("u")</MudText></MudItem>
+            @if (Vessel.LastPosition is not null)
+            {
+                <MudItem xs="6"><MudText Typo="Typo.subtitle2">Position</MudText></MudItem>
+                <MudItem xs="6"><MudText>@Vessel.LastPosition.Latitude.ToString("0.0000", System.Globalization.CultureInfo.InvariantCulture)°N, @Vessel.LastPosition.Longitude.ToString("0.0000", System.Globalization.CultureInfo.InvariantCulture)°E</MudText></MudItem>
+                @if (Vessel.LastPosition.SpeedOverGroundKnots is not null)
+                {
+                    <MudItem xs="6"><MudText Typo="Typo.subtitle2">Speed</MudText></MudItem>
+                    <MudItem xs="6"><MudText>@Vessel.LastPosition.SpeedOverGroundKnots.Value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) knots</MudText></MudItem>
+                }
+            }
+        </MudGrid>
+        @if (Track is not null && Track.Properties.PointCount > 0)
+        {
+            <MudDivider Class="my-3" />
+            <MudText Typo="Typo.subtitle2">24h track</MudText>
+            <MudText Typo="Typo.body2">@Track.Properties.PointCount points</MudText>
+        }
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public required VesselDto Vessel { get; set; }
+
+    [Parameter]
+    public GeoJsonLineString? Track { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private Task OnCloseClicked() => OnClose.InvokeAsync();
+}

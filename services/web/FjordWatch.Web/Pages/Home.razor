@@ -1,0 +1,92 @@
+@page "/"
+@implements IAsyncDisposable
+@inject ApiClient Api
+@inject VesselsHubClient Hub
+@inject IJSRuntime JS
+
+<PageTitle>FjordWatch</PageTitle>
+
+<div class="map-shell">
+    <MapView @ref="_mapView" OnViewportChanged="HandleViewportChanged" OnVesselClicked="HandleVesselClicked" />
+    <LegendPanel />
+    @if (_selected is not null)
+    {
+        <VesselSidePanel Vessel="_selected" Track="_track" OnClose="ClearSelection" />
+    }
+</div>
+
+@code {
+    private MapView _mapView = default!;
+    private VesselDto? _selected;
+    private GeoJsonLineString? _track;
+    private CancellationTokenSource? _viewportCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Hub.OnPositionUpdate += HandlePositionUpdate;
+        await Hub.StartAsync();
+    }
+
+    private async Task HandleViewportChanged((double West, double South, double East, double North, int Zoom) vp)
+    {
+        _viewportCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _viewportCts = cts;
+        try
+        {
+            await Hub.SetViewportAsync(vp.West, vp.South, vp.East, vp.North, cts.Token);
+            var vessels = await Api.GetVesselsAsync(vp.West, vp.South, vp.East, vp.North, cts.Token);
+            await _mapView.RenderVesselsAsync(vessels);
+        }
+        catch (OperationCanceledException) { }
+        catch (HttpRequestException ex)
+        {
+            Console.Error.WriteLine($"vessel fetch failed: {ex.Message}");
+        }
+    }
+
+    private async Task HandleVesselClicked(long mmsi)
+    {
+        try
+        {
+            _selected = await Api.GetVesselAsync(mmsi);
+            _track = await Api.GetTrackAsync(mmsi);
+            if (_track is not null)
+            {
+                await _mapView.DrawTrackAsync(_track);
+            }
+            StateHasChanged();
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.Error.WriteLine($"vessel detail fetch failed: {ex.Message}");
+        }
+    }
+
+    private async void HandlePositionUpdate(PositionUpdate update)
+    {
+        try
+        {
+            await _mapView.UpsertPositionAsync(update);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"position update render failed: {ex.Message}");
+        }
+    }
+
+    private async Task ClearSelection()
+    {
+        _selected = null;
+        _track = null;
+        await _mapView.ClearTrackAsync();
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Hub.OnPositionUpdate -= HandlePositionUpdate;
+        _viewportCts?.Cancel();
+        await Task.CompletedTask;
+    }
+}

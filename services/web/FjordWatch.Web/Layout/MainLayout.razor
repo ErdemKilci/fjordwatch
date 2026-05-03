@@ -1,0 +1,13 @@
+@inherits LayoutComponentBase
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Surface">
+        <MudText Typo="Typo.h6" Class="ml-2">FjordWatch</MudText>
+        <MudSpacer />
+        <ConnectionStatus />
+        <MudIconButton Icon="@Icons.Material.Filled.Help" Color="Color.Default" Href="/about" />
+    </MudAppBar>
+    <MudMainContent Class="pa-0">
+        @Body
+    </MudMainContent>
+</MudLayout>

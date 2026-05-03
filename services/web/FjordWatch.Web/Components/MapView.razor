@@ -1,0 +1,92 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div id="@_elementId" class="map-canvas"></div>
+
+@code {
+    private const string ElementIdPrefix = "fjordwatch-map";
+    private readonly string _elementId = $"{ElementIdPrefix}-{Guid.NewGuid():N}";
+    private DotNetObjectReference<MapView>? _selfRef;
+    private bool _initialized;
+
+    [Parameter]
+    public EventCallback<(double West, double South, double East, double North, int Zoom)> OnViewportChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<long> OnVesselClicked { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _selfRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync(
+                "fjordwatchMap.createMap",
+                _elementId,
+                _selfRef,
+                new { latitude = 65.0, longitude = 12.0 },
+                5);
+            _initialized = true;
+        }
+    }
+
+    public ValueTask RenderVesselsAsync(IEnumerable<VesselDto> vessels)
+    {
+        var payload = vessels
+            .Where(v => v.LastPosition is not null)
+            .Select(v => new
+            {
+                mmsi = v.Mmsi,
+                latitude = v.LastPosition!.Latitude,
+                longitude = v.LastPosition.Longitude,
+                category = v.Category,
+                label = v.Name ?? v.Mmsi.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            })
+            .ToList();
+        return JS.InvokeVoidAsync("fjordwatchMap.addOrUpdateVessels", _elementId, payload);
+    }
+
+    public ValueTask UpsertPositionAsync(PositionUpdate update) =>
+        JS.InvokeVoidAsync(
+            "fjordwatchMap.addOrUpdateVessel",
+            _elementId,
+            new
+            {
+                mmsi = update.Mmsi,
+                latitude = update.Latitude,
+                longitude = update.Longitude,
+                category = "Unknown",
+                label = update.Mmsi.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            });
+
+    public ValueTask DrawTrackAsync(GeoJsonLineString feature) =>
+        JS.InvokeVoidAsync("fjordwatchMap.drawTrack", _elementId, feature);
+
+    public ValueTask ClearTrackAsync() =>
+        JS.InvokeVoidAsync("fjordwatchMap.clearTrack", _elementId);
+
+    [JSInvokable]
+    public Task OnViewportChangedFromJs(double west, double south, double east, double north, int zoom) =>
+        OnViewportChanged.InvokeAsync((west, south, east, north, zoom));
+
+    [JSInvokable("OnViewportChanged")]
+    public Task OnViewportChangedFromJsBridge(double west, double south, double east, double north, int zoom) =>
+        OnViewportChanged.InvokeAsync((west, south, east, north, zoom));
+
+    [JSInvokable("OnVesselClicked")]
+    public Task OnVesselClickedFromJs(long mmsi) => OnVesselClicked.InvokeAsync(mmsi);
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_initialized)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("fjordwatchMap.disposeMap", _elementId);
+            }
+            catch (JSDisconnectedException) { }
+            catch (TaskCanceledException) { }
+        }
+        _selfRef?.Dispose();
+    }
+}

@@ -55,21 +55,32 @@ restart:  ## Restart the stack
 	$(MAKE) down
 	$(MAKE) up
 
-test: test-rust  ## Run all language test suites
+test: test-rust test-dotnet  ## Run all language test suites
 
 test-rust:  ## Run Rust test suite for ais-ingestion
 	cd services/ais-ingestion && cargo test --workspace
 
-lint: lint-rust  ## Run all linters
+test-dotnet:  ## Run .NET xUnit tests for core-api
+	cd services/core-api && dotnet test
+
+lint: lint-rust lint-dotnet  ## Run all linters
 
 lint-rust:  ## Run cargo fmt --check + cargo clippy -D warnings
 	cd services/ais-ingestion && cargo fmt --all -- --check
 	cd services/ais-ingestion && cargo clippy --workspace --all-targets -- -D warnings
 
-format: format-rust  ## Run all formatters
+lint-dotnet:  ## Run dotnet format --verify-no-changes
+	cd services/core-api && dotnet format --verify-no-changes
+	cd services/web && dotnet format --verify-no-changes
+
+format: format-rust format-dotnet  ## Run all formatters
 
 format-rust:  ## Run cargo fmt
 	cd services/ais-ingestion && cargo fmt --all
+
+format-dotnet:  ## Run dotnet format
+	cd services/core-api && dotnet format
+	cd services/web && dotnet format
 
 migrate:  ## Run database migrations once (Flyway)
 	$(COMPOSE) run --rm db-migrate

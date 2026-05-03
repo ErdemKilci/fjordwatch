@@ -1,0 +1,118 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+#app {
+    height: 100%;
+}
+
+.map-shell {
+    position: relative;
+    width: 100vw;
+    height: calc(100vh - 64px);
+}
+
+.map-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.legend-panel {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    z-index: 401;
+    min-width: 180px;
+    max-width: 220px;
+}
+
+.legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+}
+
+.legend-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.vessel-side-panel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 402;
+    width: 360px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+}
+
+.loading-progress {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6rem;
+    height: 6rem;
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke: #1976d2;
+    stroke-width: 0.6rem;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+    animation: progress-spin 1.6s ease-in-out infinite;
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+}
+
+.loading-progress circle:nth-child(1) {
+    stroke: rgba(25, 118, 210, 0.3);
+    animation: none;
+    stroke-dashoffset: 0;
+}
+
+@keyframes progress-spin {
+    50% {
+        stroke-dashoffset: 0;
+    }
+    100% {
+        stroke-dashoffset: -200;
+    }
+}
+
+.loading-progress-text {
+    position: absolute;
+    top: calc(50% + 3.5rem);
+    left: 50%;
+    transform: translate(-50%, 0);
+    color: #6c757d;
+}
+
+#blazor-error-ui {
+    background: #fff3cd;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}

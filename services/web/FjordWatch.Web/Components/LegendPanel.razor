@@ -1,0 +1,29 @@
+<div class="legend-panel">
+    <MudPaper Class="pa-3" Elevation="6">
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Vessel type</MudText>
+        @foreach (var entry in _entries)
+        {
+            <div class="legend-row">
+                <span class="legend-swatch" style="background:@entry.Color"></span>
+                <MudText Typo="Typo.body2">@entry.Label</MudText>
+            </div>
+        }
+    </MudPaper>
+</div>
+
+@code {
+    private readonly (string Label, string Color)[] _entries =
+    [
+        ("Cargo", "#0d6efd"),
+        ("Tanker", "#dc3545"),
+        ("Fishing", "#198754"),
+        ("Passenger", "#fd7e14"),
+        ("HighSpeed", "#6f42c1"),
+        ("Pleasure", "#20c997"),
+        ("Sailing", "#0dcaf0"),
+        ("Tug", "#6c757d"),
+        ("SAR", "#ffc107"),
+        ("Military", "#000000"),
+        ("Other / Unknown", "#adb5bd"),
+    ];
+}
