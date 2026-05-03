@@ -65,6 +65,28 @@
     public ValueTask ClearTrackAsync() =>
         JS.InvokeVoidAsync("fjordwatchMap.clearTrack", _elementId);
 
+    public ValueTask RenderSarAsync(IEnumerable<SarDetectionDto> detections) =>
+        JS.InvokeVoidAsync(
+            "fjordwatchMap.addOrUpdateSar",
+            _elementId,
+            detections.Select(d => new
+            {
+                id = d.Id,
+                latitude = d.Latitude,
+                longitude = d.Longitude,
+                isDark = d.IsDark,
+                confidence = d.Confidence,
+                matchedMmsi = d.MatchedMmsi,
+                matchDistanceMeters = d.MatchDistanceMeters ?? 0f,
+                matchLagSeconds = d.MatchLagSeconds ?? 0f,
+            }).ToList());
+
+    public ValueTask ClearSarAsync() =>
+        JS.InvokeVoidAsync("fjordwatchMap.clearSar", _elementId);
+
+    public ValueTask ToggleSarLayerAsync(bool visible) =>
+        JS.InvokeVoidAsync("fjordwatchMap.toggleSarLayer", _elementId, visible);
+
     [JSInvokable]
     public Task OnViewportChangedFromJs(double west, double south, double east, double north, int zoom) =>
         OnViewportChanged.InvokeAsync((west, south, east, north, zoom));
