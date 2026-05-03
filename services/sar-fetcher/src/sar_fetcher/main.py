@@ -5,8 +5,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import signal
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Annotated, AsyncIterator
+from typing import Annotated
 
 import structlog
 import uvicorn
@@ -78,7 +79,7 @@ def main() -> None:
     _configure_logging(settings.log_level)
     config = uvicorn.Config(
         app,
-        host="0.0.0.0",  # noqa: S104
+        host="0.0.0.0",
         port=settings.metrics_port,
         log_level=settings.log_level.lower(),
         access_log=False,

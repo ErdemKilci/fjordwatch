@@ -35,7 +35,9 @@ class ShipDetector:
 
     def warm_up(self) -> None:
         if not self._model_path.exists():
-            logger.warning("model %s missing; service will return zero detections", self._model_path)
+            logger.warning(
+                "model %s missing; service will return zero detections", self._model_path
+            )
             return
         try:
             import onnxruntime as ort

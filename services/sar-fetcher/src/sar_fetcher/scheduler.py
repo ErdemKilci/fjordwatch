@@ -42,7 +42,9 @@ class FetchJob:
             try:
                 tile_meta = await self._tile_one(scene)
                 for tile in tile_meta:
-                    await upload_tile(client, self._settings.s3_bucket, scene.scene_id, tile.tile_path)
+                    await upload_tile(
+                        client, self._settings.s3_bucket, scene.scene_id, tile.tile_path
+                    )
                 await _notify_detection(self._settings, scene, tile_meta)
                 total_tiles += len(tile_meta)
             except Exception:

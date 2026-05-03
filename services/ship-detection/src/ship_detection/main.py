@@ -27,7 +27,7 @@ def main() -> None:
     _configure_logging(settings.log_level)
     uvicorn.run(
         app,
-        host="0.0.0.0",  # noqa: S104
+        host="0.0.0.0",
         port=settings.metrics_port,
         log_level=settings.log_level.lower(),
         access_log=False,

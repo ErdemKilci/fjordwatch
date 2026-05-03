@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
-from typing import Annotated, AsyncIterator
+from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import Depends, FastAPI
 from fastapi.responses import JSONResponse
@@ -112,7 +113,11 @@ async def detect(
 
     inserted = await insert_detections(settings.database_url, rows)
 
-    correlation_window_start = req.sensing_start.replace(tzinfo=timezone.utc) if req.sensing_start.tzinfo is None else req.sensing_start
+    correlation_window_start = (
+        req.sensing_start.replace(tzinfo=UTC)
+        if req.sensing_start.tzinfo is None
+        else req.sensing_start
+    )
     report = await correlate_recent(settings, correlation_window_start)
 
     return JSONResponse(

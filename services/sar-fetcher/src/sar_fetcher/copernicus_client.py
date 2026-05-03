@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
@@ -41,7 +41,7 @@ def _fixture_catalog() -> list[SceneMetadata]:
     "yesterday" relative to call time so downstream pipeline tests have a
     plausible timestamp.
     """
-    end = datetime.now(tz=timezone.utc) - timedelta(hours=12)
+    end = datetime.now(tz=UTC) - timedelta(hours=12)
     start = end - timedelta(minutes=10)
     return [
         SceneMetadata(
@@ -65,12 +65,11 @@ async def search_recent_scenes(settings: Settings) -> list[SceneMetadata]:
         logger.warning("no Copernicus credentials; using fixture catalog")
         return _fixture_catalog()
 
-    end = datetime.now(tz=timezone.utc)
+    end = datetime.now(tz=UTC)
     start = end - timedelta(hours=settings.lookback_hours)
     west, south, east, north = (float(x) for x in settings.aoi_bbox.split(","))
     polygon = (
-        f"POLYGON(({west} {south}, {east} {south}, {east} {north}, "
-        f"{west} {north}, {west} {south}))"
+        f"POLYGON(({west} {south}, {east} {south}, {east} {north}, {west} {north}, {west} {south}))"
     )
     odata_filter = (
         "Collection/Name eq 'SENTINEL-1' "

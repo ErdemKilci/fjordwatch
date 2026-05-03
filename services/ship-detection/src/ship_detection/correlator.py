@@ -18,9 +18,7 @@ from .config import Settings
 logger = logging.getLogger(__name__)
 
 
-async def correlate_recent(
-    settings: Settings, since: datetime
-) -> dict[str, int]:
+async def correlate_recent(settings: Settings, since: datetime) -> dict[str, int]:
     """Run correlation for every uncorrelated detection since ``since``.
 
     Returns a small report dict for logging/metrics.
