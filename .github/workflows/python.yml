@@ -7,6 +7,7 @@ on:
       - "services/anomaly-detection/**"
       - "services/sar-fetcher/**"
       - "services/ship-detection/**"
+      - "services/embedding/**"
       - ".github/workflows/python.yml"
   pull_request:
     branches: [main]
@@ -14,6 +15,7 @@ on:
       - "services/anomaly-detection/**"
       - "services/sar-fetcher/**"
       - "services/ship-detection/**"
+      - "services/embedding/**"
       - ".github/workflows/python.yml"
   workflow_dispatch:
 
@@ -103,6 +105,37 @@ jobs:
           cache-dependency-path: |
             services/ship-detection/pyproject.toml
       - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: ruff check
+        run: ruff check .
+      - name: ruff format check
+        run: ruff format --check .
+      - name: mypy
+        run: mypy src
+      - name: pytest
+        run: pytest -q
+
+  embedding:
+    name: embedding lint + test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: services/embedding
+    env:
+      EMBEDDING_STUB: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: |
+            services/embedding/pyproject.toml
+      - name: Install dependencies (stub mode; skip the heavy extras)
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"

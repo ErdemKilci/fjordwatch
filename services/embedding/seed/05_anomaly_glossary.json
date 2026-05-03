@@ -1,0 +1,6 @@
+{
+  "source": "internal://glossary/anomalies",
+  "title": "FjordWatch — anomaly score interpretation",
+  "language": "en",
+  "text": "The FjordWatch anomaly detector returns a score in the range zero to one for every active vessel every ten minutes. A score above 0.5 typically indicates a vessel whose recent six-hour window departs from baseline traffic on at least one feature; a score above 0.8 is rare and warrants manual review. The score is a weighted blend of an Isolation Forest tabular score (mean speed, speed variance, heading reversals, total stop seconds, trajectory entropy, time since last fix) and an LSTM autoencoder reconstruction error over a 64-step resampled trajectory. Per-feature contributions are surfaced in the response under `contributing` so a reviewer can see which feature pushed the score up. A high score is not evidence of wrongdoing; it is only evidence that the vessel's recent behaviour is statistically unusual. False positives are common during rough weather, drifting nets, or routine operations like bunkering and pilot transfers."
+}

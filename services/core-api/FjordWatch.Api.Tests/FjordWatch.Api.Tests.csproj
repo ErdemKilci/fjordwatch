@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FjordWatch.Agent\FjordWatch.Agent.csproj" />
     <ProjectReference Include="..\FjordWatch.Api\FjordWatch.Api.csproj" />
     <ProjectReference Include="..\FjordWatch.Domain\FjordWatch.Domain.csproj" />
     <ProjectReference Include="..\FjordWatch.Infrastructure\FjordWatch.Infrastructure.csproj" />

@@ -1,0 +1,6 @@
+{
+  "source": "internal://glossary/ship-types",
+  "title": "FjordWatch — coarse ship-type categories",
+  "language": "en",
+  "text": "FjordWatch groups raw ITU-R M.1371-5 ship type codes into eleven coarse categories for display. Fishing covers code 30. Tug covers codes 31 and 32. Military covers code 35. Sailing covers code 36. Pleasure covers code 37. Search and Rescue covers code 51. High-speed craft covers codes 40 through 49. Passenger covers codes 60 through 69. Cargo covers codes 70 through 79. Tanker covers codes 80 through 89. Other covers codes 90 through 99 plus any unclassified value. Code 0 or a missing value renders as Unknown. The bbox query endpoint accepts category names directly as the `types` parameter (e.g. `types=cargo,tanker`)."
+}

@@ -1,0 +1,6 @@
+{
+  "source": "https://www.itu.int/rec/R-REC-M.1371",
+  "title": "ITU-R M.1371-5 — AIS message type summary",
+  "language": "en",
+  "text": "Automatic Identification System (AIS) is a tracking system used on ships and by Vessel Traffic Services (VTS). The ITU-R M.1371-5 recommendation defines the message types broadcast over VHF Channel A and Channel B. Message Type 1, 2, and 3 are Class A position reports broadcast every 2-10 seconds depending on speed and rate of turn; they include latitude, longitude, speed over ground, course over ground, heading, navigation status (under way, at anchor, moored, etc.), and rate of turn. Message Type 4 is a base-station report. Message Type 5 carries static and voyage-related data: name, call sign, IMO number, ship type code, dimensions, destination, and ETA. Message Type 18 is a Class B position report sent by smaller vessels at a slower cadence (every 30 seconds when under way). Message Type 19 is an extended Class B report. Message Type 21 reports aids to navigation such as buoys and lights. Message Type 24 is a Class B static-data report split into Part A (vessel name) and Part B (call sign, ship type, dimensions). The FjordWatch ingestion service decodes types 1, 2, 3, 5, 18, 19, and 24."
+}

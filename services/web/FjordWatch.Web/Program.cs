@@ -19,6 +19,7 @@ builder.Services.AddScoped(_ => new HttpClient
 });
 
 builder.Services.AddScoped<ApiClient>();
+builder.Services.AddScoped<AgentClient>();
 builder.Services.AddScoped(_ => new VesselsHubClient(new Uri(hubUrl)));
 
 await builder.Build().RunAsync();
