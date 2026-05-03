@@ -294,15 +294,68 @@ const fn navigation_status_to_u8(status: ais::messages::position_report::Navigat
 }
 
 fn ship_type_to_u8(ship_type: ais::messages::types::ShipType) -> u8 {
-    // The ais crate's ShipType is an enum without a stable numeric reachable
-    // through the public API. Round-trip through Debug to extract the raw
-    // wire code; this is sufficient for portfolio reporting and avoids a
-    // hand-rolled enum mapping that would drift with the upstream crate.
-    let dbg = format!("{ship_type:?}");
-    dbg.strip_prefix("ShipType(")
-        .and_then(|rest| rest.strip_suffix(')'))
-        .and_then(|s| s.parse::<u8>().ok())
-        .unwrap_or(0)
+    // Map ais::messages::types::ShipType variants back to ITU-R M.1371-5
+    // numeric codes. The ais crate's enum doesn't expose the wire byte
+    // through its public API, so we maintain this table by hand. Variants
+    // that carry a `u8` payload (Reserved, *Reserved, SpareLocalVessel)
+    // pass that byte through.
+    use ais::messages::types::ShipType as S;
+    match ship_type {
+        S::Reserved(n) | S::WingInGroundReserved(n) | S::HighSpeedCraftReserved(n)
+        | S::SpareLocalVessel(n) | S::PassengerReserved(n) | S::CargoReserved(n)
+        | S::TankerReserved(n) | S::OtherReserved(n) => n,
+        S::WingInGround => 20,
+        S::WingInGroundHazardousCategoryA => 21,
+        S::WingInGroundHazardousCategoryB => 22,
+        S::WingInGroundHazardousCategoryC => 23,
+        S::WingInGroundHazardousCategoryD => 24,
+        S::Fishing => 30,
+        S::Towing => 31,
+        S::TowingLarge => 32,
+        S::Dredging => 33,
+        S::DivingOps => 34,
+        S::MilitaryOps => 35,
+        S::Sailing => 36,
+        S::PleasureCraft => 37,
+        S::HighSpeedCraft => 40,
+        S::HighSpeedCraftHazardousCategoryA => 41,
+        S::HighSpeedCraftHazardousCategoryB => 42,
+        S::HighSpeedCraftHazardousCategoryC => 43,
+        S::HighSpeedCraftHazardousCategoryD => 44,
+        S::HighSpeedCraftNoAdditionalInformation => 49,
+        S::PilotVessel => 50,
+        S::SearchAndRescueVessel => 51,
+        S::Tug => 52,
+        S::PortTender => 53,
+        S::AntiPollutionEquipment => 54,
+        S::LawEnforcement => 55,
+        S::MedicalTransport => 58,
+        S::NoncombatantShip => 59,
+        S::Passenger => 60,
+        S::PassengerHazardousCategoryA => 61,
+        S::PassengerHazardousCategoryB => 62,
+        S::PassengerHazardousCategoryC => 63,
+        S::PassengerHazardousCategoryD => 64,
+        S::PassengerNoAdditionalInformation => 69,
+        S::Cargo => 70,
+        S::CargoHazardousCategoryA => 71,
+        S::CargoHazardousCategoryB => 72,
+        S::CargoHazardousCategoryC => 73,
+        S::CargoHazardousCategoryD => 74,
+        S::CargoNoAdditionalInformation => 79,
+        S::Tanker => 80,
+        S::TankerHazardousCategoryA => 81,
+        S::TankerHazardousCategoryB => 82,
+        S::TankerHazardousCategoryC => 83,
+        S::TankerHazardousCategoryD => 84,
+        S::TankerNoAdditionalInformation => 89,
+        S::Other => 90,
+        S::OtherHazardousCategoryA => 91,
+        S::OtherHazardousCategoryB => 92,
+        S::OtherHazardousCategoryC => 93,
+        S::OtherHazardousCategoryD => 94,
+        S::OtherNoAdditionalInformation => 99,
+    }
 }
 
 #[cfg(test)]
