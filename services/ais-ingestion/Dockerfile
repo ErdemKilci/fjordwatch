@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # ---- builder ---------------------------------------------------------------
-FROM rust:1.84-slim-bookworm AS builder
+FROM rust:1.89-slim-bookworm AS builder
 ENV CARGO_TERM_COLOR=always
 WORKDIR /workspace
 
@@ -8,14 +8,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends pkg-config libssl-dev \
  && rm -rf /var/lib/apt/lists/*
 
-# Copy manifest first so cargo can cache the dependency build layer.
 COPY Cargo.toml Cargo.lock* ./
-RUN mkdir -p src \
- && echo 'fn main() {}' > src/main.rs \
- && echo '' > src/lib.rs \
- && cargo build --release \
- && rm -rf src target/release/deps/ais_ingestion*
-
 COPY src ./src
 COPY tests ./tests
 RUN cargo build --release \

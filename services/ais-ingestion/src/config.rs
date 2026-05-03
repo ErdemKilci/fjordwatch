@@ -30,9 +30,11 @@ pub struct Config {
     #[arg(long, env = "AIS_SOURCE_PORT", default_value_t = 5631)]
     pub source_port: u16,
 
-    /// Path to a recorded NMEA file. When set, the live socket is bypassed.
-    #[arg(long, env = "AIS_REPLAY_FILE")]
-    pub replay_file: Option<PathBuf>,
+    /// Path to a recorded NMEA file. When set (and non-empty), the live
+    /// socket is bypassed. The empty-string special case lets docker-compose
+    /// forward the env var unconditionally without tripping clap.
+    #[arg(long, env = "AIS_REPLAY_FILE", default_value = "")]
+    pub replay_file_raw: String,
 
     /// When replaying, sleep this many milliseconds between lines (0 = as fast as possible).
     #[arg(long, env = "AIS_REPLAY_DELAY_MS", default_value_t = 0)]
@@ -60,6 +62,14 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn replay_file(&self) -> Option<PathBuf> {
+        if self.replay_file_raw.is_empty() {
+            None
+        } else {
+            Some(PathBuf::from(&self.replay_file_raw))
+        }
+    }
+
     pub const fn replay_delay(&self) -> Duration {
         Duration::from_millis(self.replay_delay_ms)
     }

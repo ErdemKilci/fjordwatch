@@ -22,6 +22,8 @@ RUN dotnet publish FjordWatch.Api/FjordWatch.Api.csproj \
  && rm -rf /app/*.pdb
 
 # ---- runtime ---------------------------------------------------------------
+# .NET 9 base images ship with a non-root `app` user (uid/gid 1654) by
+# default; we just install curl for the healthcheck and reuse it.
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-bookworm-slim AS runtime
 ENV DOTNET_NOLOGO=true \
     DOTNET_CLI_TELEMETRY_OPTOUT=true \
@@ -31,9 +33,7 @@ ENV DOTNET_NOLOGO=true \
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl \
- && rm -rf /var/lib/apt/lists/* \
- && groupadd --system --gid 10001 app \
- && useradd  --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=builder /app .

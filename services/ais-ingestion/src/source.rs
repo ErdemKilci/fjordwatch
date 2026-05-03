@@ -22,7 +22,7 @@ use crate::telemetry::Metrics;
 /// pacing; otherwise the service connects to the live AIS TCP socket and
 /// reconnects with exponential backoff on failure.
 pub async fn run(config: Config, tx: mpsc::Sender<String>, metrics: Arc<Metrics>) -> Result<()> {
-    if let Some(path) = config.replay_file.clone() {
+    if let Some(path) = config.replay_file() {
         info!(path = %path.display(), "running in replay mode");
         replay_file(path, config.replay_delay(), tx, metrics).await
     } else {

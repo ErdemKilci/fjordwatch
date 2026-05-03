@@ -28,7 +28,10 @@ x-stub: &stub
 services:
   # ---- Infrastructure -----------------------------------------------------
   postgres:
-    image: postgis/postgis:16-3.4
+    build:
+      context: ./services/db
+      dockerfile: Dockerfile
+    image: fjordwatch/postgres:16-postgis-pgvector
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-fjordwatch}
