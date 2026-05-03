@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -30,7 +31,7 @@ class ShipDetector:
     def __init__(self, model_path: Path, *, confidence_threshold: float = 0.25) -> None:
         self._model_path = model_path
         self._confidence_threshold = confidence_threshold
-        self._session: object | None = None
+        self._session: Any | None = None
         self._input_name: str | None = None
 
     def warm_up(self) -> None:
@@ -46,7 +47,7 @@ class ShipDetector:
                 str(self._model_path),
                 providers=["CPUExecutionProvider"],
             )
-            self._input_name = self._session.get_inputs()[0].name  # type: ignore[union-attr]
+            self._input_name = self._session.get_inputs()[0].name
         except Exception:
             logger.exception("onnx session init failed; service will return zero detections")
 
@@ -55,7 +56,7 @@ class ShipDetector:
         if self._session is None or self._input_name is None:
             return []
         x = to_model_input(tile_arr, size=INPUT_SIZE)
-        outputs = self._session.run(None, {self._input_name: x})  # type: ignore[union-attr]
+        outputs = self._session.run(None, {self._input_name: x})
         return self._parse_outputs(outputs[0], tile_h=tile_arr.shape[0], tile_w=tile_arr.shape[1])
 
     def _parse_outputs(self, raw: np.ndarray, *, tile_h: int, tile_w: int) -> list[Detection]:
