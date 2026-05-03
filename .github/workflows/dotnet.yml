@@ -1,0 +1,72 @@
+name: dotnet
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/core-api/**"
+      - "services/web/**"
+      - ".github/workflows/dotnet.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "services/core-api/**"
+      - "services/web/**"
+      - ".github/workflows/dotnet.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+
+jobs:
+  core-api:
+    name: core-api build + test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: services/core-api
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('services/core-api/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Format check
+        run: dotnet format --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Test (unit)
+        env:
+          FJORDWATCH_RUN_INTEGRATION_TESTS: "false"
+        run: dotnet test -c Release --no-build --logger "trx;LogFileName=core-api.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-api-test-results
+          path: services/core-api/**/TestResults/*.trx
+          retention-days: 7

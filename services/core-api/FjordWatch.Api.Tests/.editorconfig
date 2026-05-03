@@ -1,0 +1,4 @@
+# Test methods conventionally use snake_case for readability (Method_under_test_returns_X).
+# Disable CA1707 only for this test project.
+[*.cs]
+dotnet_diagnostic.CA1707.severity = none
