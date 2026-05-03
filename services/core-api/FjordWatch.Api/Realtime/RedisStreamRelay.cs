@@ -89,7 +89,7 @@ public sealed partial class RedisStreamRelay : BackgroundService
                     StreamMessage? msg;
                     try
                     {
-                        msg = JsonSerializer.Deserialize<StreamMessage>(payload!);
+                        msg = JsonSerializer.Deserialize<StreamMessage>(payload.ToString());
                     }
                     catch (JsonException ex)
                     {
