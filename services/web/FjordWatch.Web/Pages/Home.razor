@@ -9,6 +9,15 @@
 <div class="map-shell">
     <MapView @ref="_mapView" OnViewportChanged="HandleViewportChanged" OnVesselClicked="HandleVesselClicked" />
     <LegendPanel />
+    <div class="sar-toggle">
+        <MudPaper Class="pa-2" Elevation="6">
+            <MudCheckBox T="bool" Value="_sarEnabled" ValueChanged="OnSarToggle" Color="Color.Primary" Label="SAR overlay" />
+            @if (_sarEnabled)
+            {
+                <MudCheckBox T="bool" Value="_sarDarkOnly" ValueChanged="OnSarDarkOnlyToggle" Color="Color.Error" Label="Dark only" />
+            }
+        </MudPaper>
+    </div>
     @if (_selected is not null)
     {
         <VesselSidePanel Vessel="_selected" Track="_track" OnClose="ClearSelection" />
@@ -20,6 +29,9 @@
     private VesselDto? _selected;
     private GeoJsonLineString? _track;
     private CancellationTokenSource? _viewportCts;
+    private bool _sarEnabled;
+    private bool _sarDarkOnly = true;
+    private (double West, double South, double East, double North)? _lastViewport;
 
     protected override async Task OnInitializedAsync()
     {
@@ -29,6 +41,7 @@
 
     private async Task HandleViewportChanged((double West, double South, double East, double North, int Zoom) vp)
     {
+        _lastViewport = (vp.West, vp.South, vp.East, vp.North);
         _viewportCts?.Cancel();
         var cts = new CancellationTokenSource();
         _viewportCts = cts;
@@ -37,11 +50,60 @@
             await Hub.SetViewportAsync(vp.West, vp.South, vp.East, vp.North, cts.Token);
             var vessels = await Api.GetVesselsAsync(vp.West, vp.South, vp.East, vp.North, cts.Token);
             await _mapView.RenderVesselsAsync(vessels);
+            if (_sarEnabled)
+            {
+                await LoadSarAsync(cts.Token);
+            }
         }
         catch (OperationCanceledException) { }
         catch (HttpRequestException ex)
         {
             Console.Error.WriteLine($"vessel fetch failed: {ex.Message}");
+        }
+    }
+
+    private async Task OnSarToggle(bool value)
+    {
+        _sarEnabled = value;
+        await _mapView.ToggleSarLayerAsync(value);
+        if (value)
+        {
+            await LoadSarAsync();
+        }
+        else
+        {
+            await _mapView.ClearSarAsync();
+        }
+    }
+
+    private async Task OnSarDarkOnlyToggle(bool value)
+    {
+        _sarDarkOnly = value;
+        if (_sarEnabled)
+        {
+            await _mapView.ClearSarAsync();
+            await LoadSarAsync();
+        }
+    }
+
+    private async Task LoadSarAsync(CancellationToken ct = default)
+    {
+        if (_lastViewport is not { } vp)
+        {
+            return;
+        }
+        try
+        {
+            var detections = await Api.GetSarDetectionsAsync(
+                vp.West, vp.South, vp.East, vp.North,
+                onlyDark: _sarDarkOnly,
+                limit: 200,
+                ct: ct);
+            await _mapView.RenderSarAsync(detections);
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.Error.WriteLine($"sar fetch failed: {ex.Message}");
         }
     }
 

@@ -24,6 +24,7 @@ builder.Services.AddSingleton(_ =>
     new NpgsqlDataSourceBuilder(NpgsqlConnectionStringConverter.ToKeyValue(databaseUrl)).Build());
 builder.Services.AddScoped<IVesselRepository, PostgresVesselRepository>();
 builder.Services.AddScoped<IAnomalyRepository, PostgresAnomalyRepository>();
+builder.Services.AddScoped<ISarDetectionRepository, PostgresSarDetectionRepository>();
 
 var redisUrl = builder.Configuration["REDIS_URL"] ?? "redis://redis:6379/0";
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
@@ -86,6 +87,7 @@ app.MapPrometheusScrapingEndpoint("/metrics");
 
 app.MapVesselEndpoints();
 app.MapAnomalyEndpoints();
+app.MapSarEndpoints();
 
 app.MapHub<VesselsHub>("/hubs/vessels");
 

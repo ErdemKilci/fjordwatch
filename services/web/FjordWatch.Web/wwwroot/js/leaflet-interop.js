@@ -48,6 +48,7 @@
 
             const vesselLayer = L.layerGroup().addTo(map);
             const trackLayer = L.layerGroup().addTo(map);
+            const sarLayer = L.layerGroup().addTo(map);
 
             const reportViewport = () => {
                 const bounds = map.getBounds();
@@ -66,7 +67,9 @@
                 map,
                 vesselLayer,
                 trackLayer,
+                sarLayer,
                 markers: new Map(),
+                sarMarkers: new Map(),
                 dotnetRef,
             });
         },
@@ -130,6 +133,55 @@
             if (handle) {
                 handle.vesselLayer.clearLayers();
                 handle.markers.clear();
+            }
+        },
+
+        addOrUpdateSar: function (elementId, detections) {
+            const handle = maps.get(elementId);
+            if (!handle) return;
+            for (const det of detections) {
+                const existing = handle.sarMarkers.get(det.id);
+                const color = det.isDark ? '#dc3545' : '#0d6efd';
+                const tooltip = det.isDark
+                    ? `SAR (dark) confidence ${(det.confidence * 100).toFixed(0)}%`
+                    : `SAR matched MMSI ${det.matchedMmsi} (${det.matchDistanceMeters.toFixed(0)}m, ${Math.abs(det.matchLagSeconds).toFixed(0)}s lag)`;
+                const latlng = [det.latitude, det.longitude];
+                if (existing) {
+                    existing.setLatLng(latlng);
+                    existing.setStyle({ color, fillColor: color });
+                    existing.bindTooltip(tooltip, { sticky: true });
+                } else {
+                    const marker = L.circleMarker(latlng, {
+                        radius: 6,
+                        color,
+                        fillColor: color,
+                        fillOpacity: 0.5,
+                        weight: 2,
+                    });
+                    marker.bindTooltip(tooltip, { sticky: true });
+                    marker.addTo(handle.sarLayer);
+                    handle.sarMarkers.set(det.id, marker);
+                }
+            }
+        },
+
+        clearSar: function (elementId) {
+            const handle = maps.get(elementId);
+            if (handle) {
+                handle.sarLayer.clearLayers();
+                handle.sarMarkers.clear();
+            }
+        },
+
+        toggleSarLayer: function (elementId, visible) {
+            const handle = maps.get(elementId);
+            if (!handle) return;
+            if (visible) {
+                if (!handle.map.hasLayer(handle.sarLayer)) {
+                    handle.map.addLayer(handle.sarLayer);
+                }
+            } else if (handle.map.hasLayer(handle.sarLayer)) {
+                handle.map.removeLayer(handle.sarLayer);
             }
         },
 

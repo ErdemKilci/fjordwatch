@@ -167,12 +167,35 @@ services:
         condition: service_completed_successfully
 
   ship-detection:
-    <<: *stub
+    build:
+      context: ./services/ship-detection
+      dockerfile: Dockerfile
+    image: fjordwatch/ship-detection:dev
+    restart: unless-stopped
     environment:
-      SERVICE_NAME: ship-detection
+      DATABASE_URL: postgres://${POSTGRES_USER:-fjordwatch}:${POSTGRES_PASSWORD:-fjordwatch_dev_only_change_me}@postgres:5432/${POSTGRES_DB:-fjordwatch}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fjordwatch}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fjordwatch_dev_only_change_me}
+      S3_BUCKET_SAR: ${S3_BUCKET_SAR:-sar-tiles}
+      MODEL_DIR: /app/models
+      SHIP_MODEL_FILENAME: ${SHIP_MODEL_FILENAME:-yolov8_ship.onnx}
+      SHIP_CONFIDENCE_THRESHOLD: ${SHIP_CONFIDENCE_THRESHOLD:-0.25}
+      CORRELATION_RADIUS_M: ${CORRELATION_RADIUS_M:-500}
+      CORRELATION_WINDOW_S: ${CORRELATION_WINDOW_S:-1800}
+      SHIP_DETECTION_PORT: "8001"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${SHIP_DETECTION_PORT:-8001}:8001"
+    volumes:
+      - ship-models:/app/models
     depends_on:
+      postgres:
+        condition: service_healthy
       minio:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
 
   anomaly-detection:
     build:
@@ -201,12 +224,32 @@ services:
         condition: service_completed_successfully
 
   sar-fetcher:
-    <<: *stub
+    build:
+      context: ./services/sar-fetcher
+      dockerfile: Dockerfile
+    image: fjordwatch/sar-fetcher:dev
+    restart: unless-stopped
     environment:
-      SERVICE_NAME: sar-fetcher
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fjordwatch}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fjordwatch_dev_only_change_me}
+      S3_BUCKET_SAR: ${S3_BUCKET_SAR:-sar-tiles}
+      COPERNICUS_USERNAME: ${COPERNICUS_USERNAME:-}
+      COPERNICUS_PASSWORD: ${COPERNICUS_PASSWORD:-}
+      SAR_AOI_BBOX: ${SAR_AOI_BBOX:-4,58,32,72}
+      SAR_FETCH_INTERVAL_MINUTES: ${SAR_FETCH_INTERVAL_MINUTES:-720}
+      SAR_LOOKBACK_HOURS: ${SAR_LOOKBACK_HOURS:-24}
+      SAR_TILE_SIZE_PX: ${SAR_TILE_SIZE_PX:-1024}
+      SHIP_DETECTION_URL: http://ship-detection:8001/detect
+      SAR_FETCHER_PORT: "8003"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${SAR_FETCHER_PORT:-8003}:8003"
     depends_on:
       minio:
         condition: service_healthy
+      ship-detection:
+        condition: service_started
 
   web:
     build:
@@ -226,6 +269,7 @@ volumes:
   minio-data:
   ollama-data:
   anomaly-models:
+  ship-models:
 
 networks:
   default:

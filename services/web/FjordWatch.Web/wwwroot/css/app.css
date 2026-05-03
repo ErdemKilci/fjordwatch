@@ -29,6 +29,13 @@ html, body {
     max-width: 220px;
 }
 
+.sar-toggle {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 401;
+}
+
 .legend-row {
     display: flex;
     align-items: center;

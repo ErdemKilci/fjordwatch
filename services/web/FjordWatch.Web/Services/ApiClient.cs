@@ -27,6 +27,32 @@ public sealed class ApiClient
     public Task<GeoJsonLineString?> GetTrackAsync(long mmsi, CancellationToken ct = default) =>
         _http.GetFromJsonAsync<GeoJsonLineString>($"vessels/{mmsi}/track", ct);
 
+    public async Task<IReadOnlyList<SarDetectionDto>> GetSarDetectionsAsync(
+        double west, double south, double east, double north,
+        DateTimeOffset? since = null,
+        bool onlyDark = false,
+        int? limit = null,
+        CancellationToken ct = default)
+    {
+        var bbox = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{west},{south},{east},{north}");
+        var query = new List<string> { $"bbox={Uri.EscapeDataString(bbox)}" };
+        if (since.HasValue)
+        {
+            query.Add($"since={Uri.EscapeDataString(since.Value.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture))}");
+        }
+        if (onlyDark)
+        {
+            query.Add("onlyDark=true");
+        }
+        if (limit.HasValue)
+        {
+            query.Add($"limit={limit.Value}");
+        }
+        var path = "sar?" + string.Join('&', query);
+        var result = await _http.GetFromJsonAsync<IReadOnlyList<SarDetectionDto>>(path, ct).ConfigureAwait(false);
+        return result ?? [];
+    }
+
     public async Task<IReadOnlyList<AnomalyDto>> GetAnomaliesAsync(
         DateTimeOffset? since = null,
         float? minScore = null,
